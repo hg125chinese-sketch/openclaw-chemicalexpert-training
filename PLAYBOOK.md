@@ -197,3 +197,13 @@ When orchestrating multi-skill workflows:
    - Gates are non-negotiable (SA≤6, QED>0.3, |RF-GNN|≤1.0)
    - Each cycle must produce an actionable decision for the next
    - Log which skills used, in what order, why
+
+## Skill: chem-kinase-sar (kinase hinge binder SAR & coverage KPIs)
+When targeting any kinase:
+1) Consult: qmd search "<query>" -c chem-kinase-sar -n 10
+2) Key rules:
+   - Run pool coverage analysis BEFORE docking
+   - Hard gate: ≥5% hinge binder coverage or stop and fix generator
+   - Compare generated pool coverage to training set (ratio ≥0.5)
+   - Classify final candidates by kinase inhibitor type (I/II/covalent)
+   - This skill is kinase-specific — skip entirely for non-kinase targets
