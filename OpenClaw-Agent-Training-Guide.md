@@ -52,7 +52,7 @@ Each agent has a **PLAYBOOK.md** that routes queries to the right skill. See `PL
 
 ---
 
-## 10. Agent Training Methodology
+## 2. Agent Training Methodology
 
 > **Background**: This methodology was distilled from training `dbdebug` to learn OpenClaw debugging skills. It applies to teaching any agent new skills.
 
@@ -166,7 +166,7 @@ Gradually increase difficulty, then ask the agent to write a self-assessment:
 
 ---
 
-## 11. Skill Design Lessons
+## 3. Skill Design Lessons
 
 > **Background**: Distilled from designing and iterating on `dbdebug`'s `openclaw-debug` skill.
 
@@ -255,11 +255,11 @@ Give fixed formats for notes. Otherwise the agent writes different structures ea
 
 ---
 
-## 12. Case Study: ChemicalExpert DRD2 Closed Loop
+## 4. Case Study: ChemicalExpert DRD2 Closed Loop
 
 > **Background**: After progressive training across 6 skills, ChemicalExpert executed a complete end-to-end closed loop targeting DRD2, from data acquisition to producing 5 synthesizable candidate molecules.
 
-### 12.1 Skill Training Order and Validation
+### 4.1 Skill Training Order and Validation
 
 | Order | Skill | Validation Task | Key Observation |
 |-------|-------|----------------|-----------------|
@@ -272,7 +272,7 @@ Give fixed formats for notes. Otherwise the agent writes different structures ea
 
 > **Lesson**: Training each skill individually and validating before adding the next works far better than installing everything at once.
 
-### 12.2 Closed-Loop Execution and Behavioral Correction
+### 4.2 Closed-Loop Execution and Behavioral Correction
 
 Task: Design 5 new DRD2 molecules, passing ADMET filters with synthesis routes.
 
@@ -290,7 +290,7 @@ Task: Design 5 new DRD2 molecules, passing ADMET filters with synthesis routes.
 
 > **Lesson**: Corrections should directly point out the error and require a redo. CE not only fixed results but fixed the code to prevent recurrence — a sign of internalization.
 
-### 12.3 Self-Review Summary (Written by CE)
+### 4.3 Self-Review Summary (Written by CE)
 
 **Error attribution**: "Mistook 'found a template route + forward check' for 'synthetically feasible'" / "Over-relied on formal validation" / "Didn't treat model disagreement as an uncertainty flag"
 
@@ -300,7 +300,7 @@ Task: Design 5 new DRD2 molecules, passing ADMET filters with synthesis routes.
 
 > **Lesson**: Self-review is the best way to verify internalization depth. Precise attribution + actionable improvements + honest weakness identification = genuine internalization. "I'll do better" = skill not internalized.
 
-### 12.4 Final Output
+### 4.4 Final Output
 
 ```
 research/ai4chem/closed_loop/drd2/
@@ -316,7 +316,7 @@ research/ai4chem/closed_loop/drd2/
 
 ---
 
-### 12.9 Cross-Target Migration Test: IPF/ALK5 DMTA Cycle 1
+### 4.5 Cross-Target Migration Test: IPF/ALK5 DMTA Cycle 1
 
 > **Goal**: Verify whether ChemicalExpert's 12-skill training transfers to a new target — with no hints, letting CE autonomously complete the full loop.
 
