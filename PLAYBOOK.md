@@ -207,3 +207,14 @@ When targeting any kinase:
    - Compare generated pool coverage to training set (ratio ≥0.5)
    - Classify final candidates by kinase inhibitor type (I/II/covalent)
    - This skill is kinase-specific — skip entirely for non-kinase targets
+
+## Skill: chem-reactivity-safety (structural alerts & safety screening)
+When screening candidates for safety liabilities:
+1) Consult: qmd search "<query>" -c chem-reactivity-safety -n 10
+2) Key rules:
+   - Run AFTER ADMET (skill 6), BEFORE docking (skill 9)
+   - 4 layers: PAINS → reactive metabolites → genotoxicity → chronic disease flags
+   - "danger" = hard reject, "warning" = flag for review
+   - Set is_chronic=True for chronic disease targets (IPF, diabetes, autoimmune)
+   - Every flag must be auditable (SMARTS + matched atoms)
+   - If >20% rejected → flag generation quality issue
