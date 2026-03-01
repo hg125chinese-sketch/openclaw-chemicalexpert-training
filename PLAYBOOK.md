@@ -229,3 +229,14 @@ Before any docking:
    - Especially critical for kinase targets (imidazole, aminopyrimidine near hinge)
    - Cap enumeration at 3-5 tautomers per protomer to avoid explosion
    - For large-pool screening: enumerate only top candidates after first-pass docking
+
+## Skill: chem-docking-interactions (pose QC + interaction fingerprints)
+After any docking:
+1) Consult: qmd search "<query>" -c chem-docking-interactions -n 10
+2) Key rules:
+   - ALWAYS profile co-crystal first as reference baseline
+   - For kinase Type I: hinge H-bond is NON-NEGOTIABLE — no H-bond = reject
+   - Use PLIP for detailed single-pose analysis, ProLIF for batch fingerprints
+   - Top 5 report MUST include: Vina score + interaction profile + hinge H-bond status
+   - Composite score = f(vina, interaction_quality) for final ranking
+   - Protonate correctly BEFORE interaction analysis (skill 15)
