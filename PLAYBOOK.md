@@ -240,3 +240,15 @@ After any docking:
    - Top 5 report MUST include: Vina score + interaction profile + hinge H-bond status
    - Composite score = f(vina, interaction_quality) for final ranking
    - Protonate correctly BEFORE interaction analysis (skill 15)
+
+## Skill: chem-scaffold-conditioned-gen (generation QC + anti-collapse)
+Before Cycle 2+ generation:
+1) Consult: qmd search "<query>" -c chem-scaffold-conditioned-gen -n 10
+2) Key rules:
+   - FIRST diagnose VAE health: diagnose_vae() -> check AU ratio + KL/dim
+   - full_collapse (AU<10%) -> retrain with cyclical annealing (4 cycles)
+   - After retrain, run validate_generation() -> hard gates must pass
+   - hinge_binder_coverage_ratio >= 0.3 is HARD GATE — do NOT dock if failing
+   - Strategy order: A(anti-collapse) -> B(enrich data) -> C(conditioning) -> D(rejection sampling)
+   - Every experiment changes ONE variable, commits results (success + failure)
+   - free_bits=0.25, word_dropout=0.1 as secondary defenses
