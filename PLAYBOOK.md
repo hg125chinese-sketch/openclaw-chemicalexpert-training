@@ -218,3 +218,14 @@ When screening candidates for safety liabilities:
    - Set is_chronic=True for chronic disease targets (IPF, diabetes, autoimmune)
    - Every flag must be auditable (SMARTS + matched atoms)
    - If >20% rejected → flag generation quality issue
+
+## Skill: chem-protonation-tautomer (docking input standardization)
+Before any docking:
+1) Consult: qmd search "<query>" -c chem-protonation-tautomer -n 10
+2) Key rules:
+   - ALWAYS standardize (remove salts, neutralize, canonicalize) before docking
+   - Enumerate protomers at pH 7.4 for molecules with ionizable groups
+   - Dock ALL states, report best score + which state produced it
+   - Especially critical for kinase targets (imidazole, aminopyrimidine near hinge)
+   - Cap enumeration at 3-5 tautomers per protomer to avoid explosion
+   - For large-pool screening: enumerate only top candidates after first-pass docking
