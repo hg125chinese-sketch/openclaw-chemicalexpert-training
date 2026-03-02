@@ -43,7 +43,7 @@ cp SKILL.md "$QMD_DIR/"
 tbskill-add <skill-name>
 
 # Agent uses skills via QMD search
-QMD=/home/nixos/.openclaw/.npm-global/bin/qmd
+QMD="$HOME/.openclaw/.npm-global/bin/qmd"
 $QMD search "<query>" -c <collection> -n 10
 $QMD get qmd://<path> -l 300
 ```
