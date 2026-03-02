@@ -1,6 +1,0 @@
-smiles,vina_score,has_hinge_hbond,hinge_hbond_details,key_residue_coverage,n_contacts,pose_error,rank_interaction,interaction_score,quality_flags
-CC1COCCN1c1ccc(=O)n(CN=CC=CNCC=C(C=CNC(=O)NC2=CC=C[C@H](C)C2)C(C)(C)C)c1N,-7.921,True,"[{""residue"": ""SER280.A"", ""interaction"": ""HBAcceptor""}]",0.222,11,,1,10.166666666666668,
-CC[C@H](C)Nc1cc(OC=CC(C(N)=O)[C@@H]2CCCOCCN3C(C2)C2=CN(C=CC=N2)C3CO)ccn1,-8.166,True,"[{""residue"": ""HIS283.A"", ""interaction"": ""HBAcceptor""}]",0.333,10,,2,10.0,
-[CH]CCOC=NC=CCNC(F)C(=O)CNc1ccccn1,-8.931,True,"[{""residue"": ""HIS283.A"", ""interaction"": ""HBAcceptor""}]",0.222,4,,3,8.666666666666668,
-CC1(C)C=CC=CN2N=C1Cc1ccc3ncnn3c1N1C=CC21,-8.304,True,"[{""residue"": ""HIS283.A"", ""interaction"": ""HBAcceptor""}]",0.111,9,,4,6.333333333333333,low_key_residue_coverage
-CNC(=O)CN[C@@H](C)NC=NC=CC=CC(=CC=CC=NCNc1cccc(C)n1)c1ccc(F)cc1,-8.749,False,[],0.222,12,,5,4.666666666666666,no_hinge_hbond

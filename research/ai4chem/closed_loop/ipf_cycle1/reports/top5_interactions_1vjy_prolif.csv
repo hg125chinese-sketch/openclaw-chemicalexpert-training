@@ -1,6 +1,0 @@
-rank_vina,smiles,vina_score,vina_score_redocked,has_hinge_hbond,hinge_hbond_details,key_residue_coverage,region_cov,n_contacts,rank_interaction,interaction_score,quality_flags
-4,Cc1ccc(F)cc1CC=Cc1ccccc1Cl,-9.591,-9.534,True,"[{""residue"": ""HIS283.A"", ""interaction"": ""HBAcceptor""}]",0.111,"{""hinge"": 0.333, ""gatekeeper"": 0.0, ""dfg"": 0.0, ""catalytic_lysine"": 0.0, ""p_loop"": 0.0}",2,1,8.83,
-3,CCNC(=O)c1cccc(Cc2ccccn2)c1,-8.701,-8.638,False,[],0.222,"{""hinge"": 0.667, ""gatekeeper"": 0.0, ""dfg"": 0.0, ""catalytic_lysine"": 0.0, ""p_loop"": 0.0}",5,2,3.17,CRITICAL: No hinge H-bond detected
-5,CC(=O)Nc1cccnc1NC=CNc1cc(F)ccc1C,-8.653,-8.629,False,[],0.222,"{""hinge"": 0.333, ""gatekeeper"": 0.0, ""dfg"": 0.0, ""catalytic_lysine"": 1.0, ""p_loop"": 0.0}",5,3,3.17,CRITICAL: No hinge H-bond detected
-2,Cc1cccc(Nc2ccccc2Cl)c1,-8.117,-7.912,False,[],0.111,"{""hinge"": 0.0, ""gatekeeper"": 0.0, ""dfg"": 0.0, ""catalytic_lysine"": 1.0, ""p_loop"": 0.0}",4,4,2.33,CRITICAL: No hinge H-bond detected
-1,CSC(=O)c1cccc(COc2cc(F)ccc2C)c1,-8.574,-8.594,False,[],0.0,"{""hinge"": 0.0, ""gatekeeper"": 0.0, ""dfg"": 0.0, ""catalytic_lysine"": 0.0, ""p_loop"": 0.0}",3,5,1.5,CRITICAL: No hinge H-bond detected

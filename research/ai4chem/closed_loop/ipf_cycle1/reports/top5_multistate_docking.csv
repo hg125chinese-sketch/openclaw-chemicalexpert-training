@@ -1,6 +1,0 @@
-rank,smiles,single_state_vina,n_states,expansion_ratio,best_multistate_vina,delta_best_minus_single,score_spread,best_state_desc,best_state_smi
-1,CSC(=O)c1cccc(COc2cc(F)ccc2C)c1,-8.574,1,1.0,-8.578,-0.0039999999999995595,0.0,neutral/input form | tautomer,CSC(=O)c1cccc(COc2cc(F)ccc2C)c1
-2,Cc1cccc(Nc2ccccc2Cl)c1,-8.117,2,2.0,-8.128,-0.010999999999999233,0.026999999999999247,neutral/input form | tautomer,Cc1cccc(Nc2ccccc2Cl)c1
-3,CCNC(=O)c1cccc(Cc2ccccn2)c1,-8.701,4,4.0,-8.987,-0.2859999999999996,0.4169999999999998,neutral/input form | tautomer,CCNC(=O)c1cccc(C=C2C=CC=CN2)c1
-4,Cc1ccc(F)cc1CC=Cc1ccccc1Cl,-9.591,1,1.0,-9.537,0.053999999999998494,0.0,neutral/input form | tautomer,Cc1ccc(F)cc1CC=Cc1ccccc1Cl
-5,CC(=O)Nc1cccnc1NC=CNc1cc(F)ccc1C,-8.653,8,8.0,-9.103,-0.4499999999999993,0.8949999999999996,neutral/input form | tautomer,C=C(O)Nc1ccc[nH]c1=NC=CNc1cc(F)ccc1C
