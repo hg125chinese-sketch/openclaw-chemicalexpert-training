@@ -1,0 +1,26 @@
+{
+  "input_csv": "research/ai4chem/closed_loop/ipf_cycle1/data/chembl_alk5_activity.csv",
+  "n_rows": 5067,
+  "n_valid_mols": 5067,
+  "n_invalid_smiles": 0,
+  "patterns": {
+    "aminopyrimidine": "c1ncnc(N)c1",
+    "aminopyridine": "c1ccnc(N)c1",
+    "pyrazole": "[nH]1ccnc1",
+    "purine_like": "c1ncnc2[nH]cnc12"
+  },
+  "counts": {
+    "aminopyrimidine": 277,
+    "aminopyridine": 933,
+    "pyrazole": 622,
+    "purine_like": 4,
+    "any": 1560
+  },
+  "pcts": {
+    "aminopyrimidine": 0.05466745608841524,
+    "aminopyridine": 0.18413262285375961,
+    "pyrazole": 0.12275508190250642,
+    "purine_like": 0.0007894217485691731,
+    "any": 0.30787448194197753
+  }
+}

@@ -1,0 +1,162 @@
+{
+  "pdb": "1VJY",
+  "protein": "research/ai4chem/closed_loop/ipf_cycle1/reports/protein_1vjy_withH.pdb",
+  "reference_ligand_sdf": "research/ai4chem/closed_loop/ipf_cycle1/docking_1vjy/cocrystal_lig_ph7.4.sdf",
+  "reference_profile": {
+    "n_contacts": 8,
+    "contacts": [
+      {
+        "residue": "ALA230.A",
+        "resnum": 230,
+        "interaction": "VdWContact"
+      },
+      {
+        "residue": "LYS232.A",
+        "resnum": 232,
+        "interaction": "HBDonor"
+      },
+      {
+        "residue": "LYS232.A",
+        "resnum": 232,
+        "interaction": "VdWContact"
+      },
+      {
+        "residue": "SER280.A",
+        "resnum": 280,
+        "interaction": "VdWContact"
+      },
+      {
+        "residue": "ASP281.A",
+        "resnum": 281,
+        "interaction": "VdWContact"
+      },
+      {
+        "residue": "HIS283.A",
+        "resnum": 283,
+        "interaction": "HBAcceptor"
+      },
+      {
+        "residue": "HIS283.A",
+        "resnum": 283,
+        "interaction": "VdWContact"
+      },
+      {
+        "residue": "ASP351.A",
+        "resnum": 351,
+        "interaction": "VdWContact"
+      }
+    ],
+    "has_hinge_hbond": true,
+    "hinge_hbond_details": [
+      {
+        "residue": "HIS283.A",
+        "interaction": "HBAcceptor"
+      }
+    ],
+    "key_residue_hits": {
+      "280": {
+        "region": "hinge",
+        "restype": "HIS",
+        "role": "hinge backbone NH — primary H-bond donor"
+      },
+      "281": {
+        "region": "hinge",
+        "restype": "ASP",
+        "role": "hinge+1, H-bond acceptor"
+      },
+      "283": {
+        "region": "hinge",
+        "restype": "ALA",
+        "role": "hinge backbone CO"
+      },
+      "232": {
+        "region": "catalytic_lysine",
+        "restype": "LYS",
+        "role": "catalytic lysine — salt bridge anchor"
+      }
+    },
+    "key_residue_misses": {
+      "288": {
+        "region": "gatekeeper",
+        "restype": "THR",
+        "role": "gatekeeper — determines Type I/II selectivity"
+      },
+      "322": {
+        "region": "dfg",
+        "restype": "ASP",
+        "role": "DFG-Asp — catalytic"
+      },
+      "323": {
+        "region": "dfg",
+        "restype": "PHE",
+        "role": "DFG-Phe — conformational switch"
+      },
+      "324": {
+        "region": "dfg",
+        "restype": "GLY",
+        "role": "DFG-Gly"
+      },
+      "210": {
+        "region": "p_loop",
+        "restype": "GLY",
+        "role": "P-loop glycine-rich"
+      }
+    },
+    "key_residue_coverage": 0.4444444444444444,
+    "contacted_resnums": [
+      230,
+      232,
+      280,
+      281,
+      283,
+      351
+    ]
+  },
+  "key_residues": {
+    "280": {
+      "region": "hinge",
+      "restype": "HIS",
+      "role": "hinge backbone NH — primary H-bond donor"
+    },
+    "281": {
+      "region": "hinge",
+      "restype": "ASP",
+      "role": "hinge+1, H-bond acceptor"
+    },
+    "283": {
+      "region": "hinge",
+      "restype": "ALA",
+      "role": "hinge backbone CO"
+    },
+    "288": {
+      "region": "gatekeeper",
+      "restype": "THR",
+      "role": "gatekeeper — determines Type I/II selectivity"
+    },
+    "322": {
+      "region": "dfg",
+      "restype": "ASP",
+      "role": "DFG-Asp — catalytic"
+    },
+    "323": {
+      "region": "dfg",
+      "restype": "PHE",
+      "role": "DFG-Phe — conformational switch"
+    },
+    "324": {
+      "region": "dfg",
+      "restype": "GLY",
+      "role": "DFG-Gly"
+    },
+    "232": {
+      "region": "catalytic_lysine",
+      "restype": "LYS",
+      "role": "catalytic lysine — salt bridge anchor"
+    },
+    "210": {
+      "region": "p_loop",
+      "restype": "GLY",
+      "role": "P-loop glycine-rich"
+    }
+  }
+}

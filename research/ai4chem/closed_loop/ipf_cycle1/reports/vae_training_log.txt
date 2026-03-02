@@ -1,0 +1,8 @@
+epoch 1/8 loss=2.452 recon=2.418 kl=0.122 AU=0/32 avg_std=0.988 avg_kl=0.003
+epoch 2/8 loss=1.735 recon=1.734 kl=0.001 AU=0/32 avg_std=0.992 avg_kl=0.000
+epoch 3/8 loss=1.511 recon=1.510 kl=0.002 AU=0/32 avg_std=0.994 avg_kl=0.001
+epoch 4/8 loss=1.366 recon=1.366 kl=0.000 AU=0/32 avg_std=0.994 avg_kl=0.000
+epoch 5/8 loss=1.255 recon=1.254 kl=0.002 AU=0/32 avg_std=0.994 avg_kl=0.001
+epoch 6/8 loss=1.171 recon=1.170 kl=0.001 AU=0/32 avg_std=0.996 avg_kl=0.001
+epoch 7/8 loss=1.105 recon=1.104 kl=0.002 AU=0/32 avg_std=0.995 avg_kl=0.001
+epoch 8/8 loss=1.049 recon=1.048 kl=0.001 AU=0/32 avg_std=0.994 avg_kl=0.001

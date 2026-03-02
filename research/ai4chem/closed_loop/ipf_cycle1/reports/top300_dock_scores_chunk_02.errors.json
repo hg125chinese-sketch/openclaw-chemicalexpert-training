@@ -1,0 +1,6 @@
+[
+  {
+    "smiles": "CC1=NCCC(=CCC(=O)[PH](=[N-])C=O)C=CN1.c1ccccc1",
+    "error": "Command failed (3): /home/node/.local/bin/mk_prepare_ligand.py -i research/ai4chem/closed_loop/ipf_cycle1/docking_1vjy/cand_0046.sdf -o research/ai4chem/closed_loop/ipf_cycle1/docking_1vjy/cand_0046.pdbqt\nSTDOUT:\nInput molecules processed: 0, skipped: 0\nPDBQT files written: 0\nPDBQT files not written due to error: 1\nInput molecules with errors: 1\nNo PDBQT files were written due to errors!\n\nSTDERR:\nRDKit molecule has 2 fragments. Must have 1.\n"
+  }
+]

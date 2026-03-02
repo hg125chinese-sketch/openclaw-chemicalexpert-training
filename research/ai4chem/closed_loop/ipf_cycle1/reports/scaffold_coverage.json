@@ -1,0 +1,60 @@
+{
+  "motifs": {
+    "pyrimidine_ring": "n1cncnc1",
+    "imidazole_ring": "n1cc[nH]1",
+    "imidazole_ring_alt": "c1ncc[nH]1",
+    "pyrazole_ring": "n1nccc1",
+    "quinazoline_core": "c1nc2ncccc2cc1",
+    "2-aminopyrimidine": "Nc1nccnc1",
+    "2-aminopyridine": "Nc1ccccn1",
+    "pyrazolo_pyrimidine": "n1ncc2ncncc12"
+  },
+  "train": {
+    "n_smiles": 5067,
+    "n_rdkit_ok": 5067,
+    "counts": {
+      "pyrimidine_ring": 29,
+      "imidazole_ring": 0,
+      "imidazole_ring_alt": 622,
+      "pyrazole_ring": 1184,
+      "quinazoline_core": 1,
+      "2-aminopyrimidine": 32,
+      "2-aminopyridine": 933,
+      "pyrazolo_pyrimidine": 0
+    },
+    "fractions": {
+      "pyrimidine_ring": 0.005723307677126505,
+      "imidazole_ring": 0.0,
+      "imidazole_ring_alt": 0.12275508190250642,
+      "pyrazole_ring": 0.23366883757647522,
+      "quinazoline_core": 0.00019735543714229328,
+      "2-aminopyrimidine": 0.006315373988553385,
+      "2-aminopyridine": 0.18413262285375961,
+      "pyrazolo_pyrimidine": 0.0
+    }
+  },
+  "candidate_pool": {
+    "n_smiles": 2999,
+    "n_rdkit_ok": 2999,
+    "counts": {
+      "pyrimidine_ring": 1,
+      "imidazole_ring": 0,
+      "imidazole_ring_alt": 3,
+      "pyrazole_ring": 18,
+      "quinazoline_core": 0,
+      "2-aminopyrimidine": 1,
+      "2-aminopyridine": 27,
+      "pyrazolo_pyrimidine": 0
+    },
+    "fractions": {
+      "pyrimidine_ring": 0.00033344448149383126,
+      "imidazole_ring": 0.0,
+      "imidazole_ring_alt": 0.0010003334444814939,
+      "pyrazole_ring": 0.006002000666888963,
+      "quinazoline_core": 0.0,
+      "2-aminopyrimidine": 0.00033344448149383126,
+      "2-aminopyridine": 0.009003001000333445,
+      "pyrazolo_pyrimidine": 0.0
+    }
+  }
+}

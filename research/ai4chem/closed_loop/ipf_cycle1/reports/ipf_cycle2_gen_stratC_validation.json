@@ -1,0 +1,94 @@
+{
+  "ckpt": "research/ai4chem/closed_loop/ipf_cycle1/models/selfies_vae_cycle2_stratC.pt",
+  "n_per_fragment": 20000,
+  "cond_fragments": {
+    "aminopyrimidine": "Nc1nccnc1",
+    "aminopyridine": "Nc1ccccn1",
+    "pyrazole": "[nH]1ccnc1"
+  },
+  "experiment_A": {
+    "prefix": true,
+    "by_condition": {
+      "aminopyrimidine": {
+        "fragment": "Nc1nccnc1",
+        "n_unique": 540
+      },
+      "aminopyridine": {
+        "fragment": "Nc1ccccn1",
+        "n_unique": 568
+      },
+      "pyrazole": {
+        "fragment": "[nH]1ccnc1",
+        "n_unique": 561
+      }
+    },
+    "validate_generation": {
+      "n_generated": 1669,
+      "n_valid": 1669,
+      "n_unique": 1669,
+      "validity_pct": 100.0,
+      "uniqueness_pct": 100.0,
+      "novelty_pct": 100.0,
+      "hinge_coverage_pct": 61.4,
+      "train_hinge_pct": 47.7,
+      "coverage_ratio": 1.287,
+      "internal_diversity": 0.835,
+      "gate_results": {
+        "validity": {
+          "value": 100.0,
+          "threshold": 85.0,
+          "pass": true
+        },
+        "hinge_coverage_ratio": {
+          "value": 1.2867890992878426,
+          "threshold": 0.3,
+          "pass": true
+        }
+      },
+      "all_gates_passed": true
+    }
+  },
+  "experiment_B": {
+    "prefix": false,
+    "by_condition": {
+      "aminopyrimidine": {
+        "fragment": "Nc1nccnc1",
+        "n_unique": 15868
+      },
+      "aminopyridine": {
+        "fragment": "Nc1ccccn1",
+        "n_unique": 16006
+      },
+      "pyrazole": {
+        "fragment": "[nH]1ccnc1",
+        "n_unique": 15626
+      }
+    },
+    "validate_generation": {
+      "n_generated": 45477,
+      "n_valid": 45477,
+      "n_unique": 45477,
+      "validity_pct": 100.0,
+      "uniqueness_pct": 100.0,
+      "novelty_pct": 100.0,
+      "hinge_coverage_pct": 0.1,
+      "train_hinge_pct": 47.7,
+      "coverage_ratio": 0.002,
+      "internal_diversity": 0.881,
+      "gate_results": {
+        "validity": {
+          "value": 100.0,
+          "threshold": 85.0,
+          "pass": true
+        },
+        "hinge_coverage_ratio": {
+          "value": 0.002259789704154604,
+          "threshold": 0.3,
+          "pass": false
+        }
+      },
+      "all_gates_passed": false
+    }
+  },
+  "decision": "A_PASS_B_FAIL: prefix trivial solution → need true latent conditioning (retrain w/ concat(z, frag_embed))"
+}
