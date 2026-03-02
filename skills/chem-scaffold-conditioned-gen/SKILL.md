@@ -632,7 +632,14 @@ Starting Cycle 2 (after Cycle 1 showed generation problems):
 |   |   (most powerful, requires more engineering)
 |   |
 |   +-- Strategy D: Rejection sampling from existing VAE
-|       (quick fix, use if efficiency > 5%)
+|   |   (quick fix, but can be compute-wasteful if efficiency is low)
+|   |
+|   +-- Strategy E: Logit Bias Decoding (constrained sampling; **recommended default**)
+|       Use when: VAE is healthy (AU high) but hinge/motif coverage is low.
+|       Implement: before softmax at each decoding step, add a positive logit bias
+|       (e.g., **+2.0**) to SELFIES token IDs that appear in the target fragment.
+|       Efficiency: ~**2.8%** accepted/attempts in our IPF Cycle 3 (vs ~**1.5%** for full-sequence rejection sampling in Cycle 2).
+|       Priority: prefer **E** over **D** (more efficient) and over retraining **C** (more reliable, less engineering) when time matters.
 |
 +-- Step 2: Generate candidate pool (n=1000-5000)
 |
@@ -662,13 +669,28 @@ Q: Is the VAE latent space collapsed?
 +-- NO (AU > 10%)
     |
     +-- Hinge coverage < 30%?
-    |   +-- YES, rejection sampling efficiency > 5%? -> Strategy D
-    |   +-- YES, rejection sampling efficiency < 5%? -> Strategy B or C
+    |   +-- YES -> Strategy E (logit bias decoding) [recommended default]
+    |   |       If still FAILs hard gates -> try Strategy D (rejection sampling)
+    |   |       If efficiency is too low (<0.5%) or distribution still off -> Strategy B or C
     |   +-- NO -> proceed (generation is fine)
     |
     +-- Coverage OK but diversity low?
         +-- Increase temperature or latent sampling radius
 ```
+
+### Architecture lesson learned (IPF Cycles)
+
+**Observation:** Across 6 rounds of conditioning experiments on a SELFIES **GRU** decoder
+(concat(z, frag_embed), aux classifier head, cross-attention conditioning), the decoder can still
+structurally ignore external condition signals during autoregressive decoding.
+
+**Root cause:** An autoregressive decoder can route around conditioning by relying on its own
+history/state trajectory. If the condition is not enforced as a hard constraint, the model can
+achieve low reconstruction loss while effectively bypassing the condition.
+
+**Conclusion (for this architecture):** prefer **inference-time intervention** (Strategy E logit bias
+or Strategy D rejection sampling) over training-time conditioning when the KPI is
+“must contain a specific substructure”.
 
 ## Failure Modes
 
