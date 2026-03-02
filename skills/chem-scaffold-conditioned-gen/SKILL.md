@@ -7,6 +7,15 @@ metadata: { "openclaw": { "emoji": "🧬", "requires": { "bins": ["python3"], "p
 
 # Scaffold-Conditioned Generation with Anti-Collapse
 
+### Workspace variable
+
+Use a workspace path variable in commands so this repo does not hard-code a personal directory:
+
+```bash
+OPENCLAW_WORKSPACE=<OPENCLAW_WORKSPACE_PATH>
+```
+
+
 Unconditional molecular generation (vanilla VAE on SELFIES/SMILES) explores broad chemical space but has no mechanism to stay near the target's pharmacophore. For kinase inhibitors, this means the generator happily produces molecules without hinge binder motifs — the one structural feature that makes a kinase inhibitor a kinase inhibitor. This skill fixes generation at the source instead of relying on post-hoc filtering.
 
 ## When to Use

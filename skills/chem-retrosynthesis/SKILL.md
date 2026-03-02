@@ -7,6 +7,15 @@ metadata: { "openclaw": { "emoji": "⚗️", "requires": { "bins": ["python3"], 
 
 # Retrosynthetic Analysis
 
+### Workspace variable
+
+Use a workspace path variable in commands so this repo does not hard-code a personal directory:
+
+```bash
+OPENCLAW_WORKSPACE=<OPENCLAW_WORKSPACE_PATH>
+```
+
+
 Break down target molecules into purchasable starting materials through systematic disconnection. This skill covers manual analysis, template-based methods, and template-free ML approaches.
 
 ## When to Use
@@ -641,4 +650,4 @@ def score_molecule_for_synthesis(smi):
 - **Save analyses** to `research/ai4chem/retrosynthesis/<target-slug>.md`
 - **Save template libraries** to `research/ai4chem/retrosynthesis/templates/`
 - **Cross-reference** with generated molecules from chem-molgen experiments
-- **Git commit**: `cd /home/node/.openclaw/workspace-chemicalexpert && git add -A && git commit -m "retro: <target> analysis"`
+- **Git commit**: `cd $OPENCLAW_WORKSPACE && git add -A && git commit -m "retro: <target> analysis"`

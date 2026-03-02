@@ -7,6 +7,15 @@ metadata: { "openclaw": { "emoji": "🚨", "requires": { "bins": ["python3"], "p
 
 # Reactivity & Safety: Structural Alert Screening
 
+### Workspace variable
+
+Use a workspace path variable in commands so this repo does not hard-code a personal directory:
+
+```bash
+OPENCLAW_WORKSPACE=<OPENCLAW_WORKSPACE_PATH>
+```
+
+
 Drug candidates can look great on paper — good activity, decent QED, passing Lipinski — and still fail because they contain structural features that cause toxicity, metabolic instability, or assay interference. This skill turns medicinal chemistry safety knowledge into computable, auditable gates.
 
 ## When to Use

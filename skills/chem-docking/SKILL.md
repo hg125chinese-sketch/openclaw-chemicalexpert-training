@@ -7,6 +7,15 @@ metadata: { "openclaw": { "emoji": "🔬", "requires": { "bins": ["python3"], "p
 
 # Molecular Docking & Virtual Screening
 
+### Workspace variable
+
+Use a workspace path variable in commands so this repo does not hard-code a personal directory:
+
+```bash
+OPENCLAW_WORKSPACE=<OPENCLAW_WORKSPACE_PATH>
+```
+
+
 Predict how small molecules bind to protein targets using AutoDock Vina. This skill connects molecular design (skills 2-6) to biological activity — a molecule's predicted binding pose and affinity can validate or reject candidates before synthesis.
 
 ## When to Use
@@ -652,4 +661,4 @@ Is docking worth running?
 - **Save receptor files** to `research/ai4chem/docking/<target>/receptor/`
 - **Save top hit poses** to `research/ai4chem/docking/<target>/poses/`
 - **Cross-reference** with ADMET profiles (skill 6) and retro routes (skill 4)
-- **Git commit**: `cd /home/node/.openclaw/workspace-chemicalexpert && git add -A && git commit -m "docking: <target> VS results"`
+- **Git commit**: `cd $OPENCLAW_WORKSPACE && git add -A && git commit -m "docking: <target> VS results"`

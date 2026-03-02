@@ -7,6 +7,15 @@ metadata: { "openclaw": { "emoji": "🧊", "requires": { "bins": ["python3"], "p
 
 # 3D Molecular Generation
 
+### Workspace variable
+
+Use a workspace path variable in commands so this repo does not hard-code a personal directory:
+
+```bash
+OPENCLAW_WORKSPACE=<OPENCLAW_WORKSPACE_PATH>
+```
+
+
 Generate molecules directly in 3D space using E(3)-equivariant diffusion models. Unlike SMILES/SELFIES generators (skill 3), these produce atom positions and types simultaneously — the output is a point cloud that respects rotational/translational symmetry.
 
 ## When to Use

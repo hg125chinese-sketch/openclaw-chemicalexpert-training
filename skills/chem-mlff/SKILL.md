@@ -7,6 +7,15 @@ metadata: { "openclaw": { "emoji": "⚛️", "requires": { "bins": ["python3"], 
 
 # Machine-Learned Force Fields
 
+### Workspace variable
+
+Use a workspace path variable in commands so this repo does not hard-code a personal directory:
+
+```bash
+OPENCLAW_WORKSPACE=<OPENCLAW_WORKSPACE_PATH>
+```
+
+
 Use pre-trained MACE models for molecular energy evaluation, geometry optimization, and conformer ranking at near-DFT accuracy. This replaces MMFF/UFF (RDKit defaults) when accuracy matters — binding pose refinement, strain energy calculation, or conformational analysis.
 
 ## When to Use

@@ -7,6 +7,15 @@ metadata: { "openclaw": { "emoji": "🔄", "requires": { "bins": ["python3"], "p
 
 # Autonomous Experiment Planning
 
+### Workspace variable
+
+Use a workspace path variable in commands so this repo does not hard-code a personal directory:
+
+```bash
+OPENCLAW_WORKSPACE=<OPENCLAW_WORKSPACE_PATH>
+```
+
+
 Orchestrate complete DMTA (Design-Make-Test-Analyze) cycles by combining all 11 chem skills into a coherent workflow. This is the "conductor" skill — it decides what to run, in what order, and how to iterate based on results.
 
 ## When to Use
@@ -459,7 +468,7 @@ class DMTAProject:
 ## Reproducibility
 ```bash
 # Full pipeline
-cd /home/node/.openclaw/workspace-chemicalexpert
+cd $OPENCLAW_WORKSPACE
 python research/ai4chem/closed_loop/[target]/cycle_[N]/run_cycle.py
 ```
 ```

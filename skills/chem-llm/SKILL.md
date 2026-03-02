@@ -7,6 +7,15 @@ metadata: { "openclaw": { "emoji": "🤖", "requires": { "bins": ["curl", "pytho
 
 # Chemical LLM Applications
 
+### Workspace variable
+
+Use a workspace path variable in commands so this repo does not hard-code a personal directory:
+
+```bash
+OPENCLAW_WORKSPACE=<OPENCLAW_WORKSPACE_PATH>
+```
+
+
 Use LLMs as chemistry reasoning tools. This skill covers how to query LLMs for chemical tasks, validate their outputs with RDKit, and integrate LLM reasoning into the DMTA cycle (Design-Make-Test-Analyze).
 
 ## When to Use
@@ -401,4 +410,4 @@ For EVERY LLM chemistry output, apply this protocol:
 - **Save LLM-generated descriptions** to `research/ai4chem/descriptions/<molecule>.md`
 - **Save experiment plans** to `research/ai4chem/plans/<target>-<date>.md`
 - **Tag all files**: Include `[LLM-assisted]` in commit messages for LLM-generated content
-- **Git commit**: `cd /home/node/.openclaw/workspace-chemicalexpert && git add -A && git commit -m "llm-assisted: <description>"`
+- **Git commit**: `cd $OPENCLAW_WORKSPACE && git add -A && git commit -m "llm-assisted: <description>"`

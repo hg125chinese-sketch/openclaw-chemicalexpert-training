@@ -7,6 +7,15 @@ metadata: { "openclaw": { "emoji": "🧪", "requires": { "bins": ["python3"], "p
 
 # Molecular Generative Models
 
+### Workspace variable
+
+Use a workspace path variable in commands so this repo does not hard-code a personal directory:
+
+```bash
+OPENCLAW_WORKSPACE=<OPENCLAW_WORKSPACE_PATH>
+```
+
+
 Design, train, and rigorously evaluate models that generate novel molecules. This skill covers string-based (VAE, Transformer, Diffusion on SMILES/SELFIES) and graph-based approaches, with emphasis on what separates toy demos from useful generative chemistry.
 
 ## When to Use
@@ -556,4 +565,4 @@ Always produce this summary:
 - **Save models** to `research/ai4chem/models/<model-name>/`
 - **Save experiments** to `research/ai4chem/experiments/molgen/<date>-<model>.md`
 - **Cross-reference** with paper notes in `research/ai4chem/papers/molecule-generation/`
-- **Git commit**: `cd /home/node/.openclaw/workspace-chemicalexpert && git add -A && git commit -m "molgen: <description>"`
+- **Git commit**: `cd $OPENCLAW_WORKSPACE && git add -A && git commit -m "molgen: <description>"`

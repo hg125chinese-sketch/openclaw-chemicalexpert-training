@@ -7,6 +7,15 @@ metadata: { "openclaw": { "emoji": "💊", "requires": { "bins": ["python3"], "p
 
 # ADMET Prediction
 
+### Workspace variable
+
+Use a workspace path variable in commands so this repo does not hard-code a personal directory:
+
+```bash
+OPENCLAW_WORKSPACE=<OPENCLAW_WORKSPACE_PATH>
+```
+
+
 Predict drug-likeness and pharmacokinetic properties. ADMET is the bridge between molecular design (skills 2-5) and real-world drug development. A beautiful molecule is worthless if it can't be absorbed, distributed, metabolized, excreted safely, and is non-toxic.
 
 ## When to Use
@@ -408,4 +417,4 @@ def combined_drugability_score(smi):
 - **Save profiles** to `research/ai4chem/admet/<date>-<candidate-set>.md`
 - **Cross-reference** with generated molecules from chem-molgen
 - **Cross-reference** with retrosynthesis assessments from chem-retrosynthesis
-- **Git commit**: `cd /home/node/.openclaw/workspace-chemicalexpert && git add -A && git commit -m "admet: <candidate-set> profiling"`
+- **Git commit**: `cd $OPENCLAW_WORKSPACE && git add -A && git commit -m "admet: <candidate-set> profiling"`

@@ -1,108 +1,146 @@
 # Teaching AI Agents to Discover Drugs: A Systematic Training Methodology
 
-**How I trained an LLM agent to autonomously run drug discovery workflows — and what it taught itself along the way.**
-
----
+How I trained an LLM agent to autonomously run drug discovery workflows — and what it taught itself along the way.
 
 ## TL;DR
 
-I trained an AI agent ("ChemicalExpert") with 12 specialized chemistry skills using a systematic 7-step methodology. The agent learned to autonomously plan and execute Design-Make-Test-Analyze (DMTA) cycles for drug discovery. When given an open-ended task — "find anti-fibrosis drug candidates" — it independently selected a target, ran the full pipeline, and then *diagnosed its own output quality problems* without being asked.
+I trained an AI agent ("ChemicalExpert") with **17 specialized chemistry skills** using a systematic 7-step methodology. The agent learned to autonomously plan and execute Design-Make-Test-Analyze (DMTA) cycles for drug discovery. Over **3 iterative cycles** on the same target, the agent:
 
-This post describes the methodology, the skills, and what happened when the agent was tested on a target it had never seen before.
-
----
+- Diagnosed its own output quality problems (VAE KL collapse, missing hinge binders)
+- Ran 6 controlled experiments to fix molecular generation, documenting every failure
+- Improved Top5 candidate quality from **20% to 80%** passing the critical hinge H-bond gate
+- Discovered that SELFIES GRU VAE decoders structurally ignore conditioning signals — a finding validated across 6 independent experiments
 
 ## The Problem
 
-Large language models know a lot about chemistry. But knowing facts and *doing chemistry* are different things. An LLM can explain what QSAR is, but can it train a random forest on ChEMBL data, validate with scaffold splits, and tell you when the model is unreliable?
+Large language models know a lot about chemistry. But knowing facts and *doing* chemistry are different things. An LLM can explain what QSAR is, but can it train a random forest on ChEMBL data, validate with scaffold splits, and tell you when the model is unreliable?
 
 I wanted an agent that could:
+
 - Run computational chemistry workflows end-to-end (data → models → molecules → evaluation)
-- Know *when* to use each tool and *when not to*
+- Know when to use each tool and when not to
 - Catch its own mistakes before I catch them
 - Work on new targets without being retrained
 
-The platform is [OpenClaw](https://github.com/openclaw-ai/openclaw), an open-source agent framework. The underlying model is GPT-5.2 via OpenAI's Codex API. The agent runs in a Docker container with GPU support on NixOS/WSL2, with access to conda environments, RDKit, PyTorch, and standard scientific Python.
+The platform is [OpenClaw](https://github.com/openclaw/openclaw), an open-source agent framework. The underlying model is GPT-5.2 via OpenAI's Codex API. The agent runs in a Docker container (GPU optional), with access to conda environments, RDKit, PyTorch, and standard scientific Python.
 
 ## The 7-Step Training Methodology
 
 Through trial and error training two agents (a debugging agent and ChemicalExpert), I converged on a 7-step process:
 
-### Step 1: Pre-Assessment
-Before writing any skill, ask the agent diagnostic questions across four dimensions: current knowledge, methodology, tool capabilities, and learning preferences. Let it tell you what it knows — don't assume.
+**Step 1: Pre-Assessment** — Before writing any skill, ask the agent diagnostic questions across four dimensions: current knowledge, methodology, tool capabilities, and learning preferences. Let it tell you what it knows — don't assume.
 
-### Step 2: Deep Probing
-Design pointed questions targeting suspected gaps. The goal is to expose the difference between "knows about" and "can do."
+**Step 2: Deep Probing** — Design pointed questions targeting suspected gaps. The goal is to expose the difference between "knows about" and "can do."
 
-### Step 3: Gap Analysis
-Compare pre-assessment against probing results. Only fill gaps — don't reteach what the agent already knows.
+**Step 3: Gap Analysis** — Compare pre-assessment against probing results. Only fill gaps — don't reteach what the agent already knows.
 
-### Step 4: Skill Design
-Each skill is a structured document (~200-500 lines) with decision boundaries, runnable code examples, philosophy sections, and failure modes.
+**Step 4: Skill Design** — Each skill is a structured document (~200-700 lines) with decision boundaries, runnable code examples, philosophy sections, and failure modes. Key insight: Skills should be structured around "when to do what" rather than "how to do everything."
 
-**Key insight**: Skills should be structured around "when to do what" rather than "how to do everything."
+**Step 5: Guided Practice** — Give the agent a concrete task that requires the new skill. Watch it work. Intervene only when necessary.
 
-### Step 5: Guided Practice
-Give the agent a concrete task that requires the new skill. Watch it work. Intervene only when necessary.
+**Step 6: Behavioral Correction** — When the agent makes mistakes, challenge it to find the error itself rather than giving the answer directly.
 
-### Step 6: Behavioral Correction
-When the agent makes mistakes, challenge it to find the error itself rather than giving the answer directly.
+**Step 7: Self-Review** — Ask the agent to write its own skill review. Compare against your observations. Discrepancies reveal shallow understanding.
 
-### Step 7: Self-Review
-Ask the agent to write its own skill review. Compare against your observations. Discrepancies reveal shallow understanding.
-
-## The 12 Skills
+## The 17 Skills
 
 | # | Skill | Core Capability |
-|---|-------|----------------|
-| 1 | Literature Review | Search strategies, source verification, evidence tables |
-| 2 | QSAR Modeling | Scaffold splits, RF baseline, descriptor selection |
-| 3 | Molecular Generation | SELFIES VAE, KL collapse detection, novelty metrics |
+|---:|---|---|
+| 1 | QSAR Modeling | Scaffold splits, RF baseline, descriptor selection |
+| 2 | Graph Neural Networks | GCN for molecular properties, scaffold generalization vs RF |
+| 3 | ADMET Prediction | Rules-first (Lipinski/Veber), QED gates, chronic disease flags |
 | 4 | Retrosynthetic Analysis | Template matching, forward validation, route scoring |
-| 5 | Graph Neural Networks | GCN for molecular properties, scaffold generalization vs RF |
-| 6 | ADMET Prediction | Rules-first (Lipinski/Veber), QED gates, chronic disease flags |
-| 7 | Reaction Conditions | Yield prediction, reagent selection, total yield calculation |
-| 8 | Chemical LLM | When to use LLM reasoning vs computation |
+| 5 | Reaction Conditions | Yield prediction, reagent selection, total yield calculation |
+| 6 | Chemical LLM | When to use LLM reasoning vs computation |
+| 7 | Molecular Generation | SELFIES VAE, KL collapse detection, novelty metrics |
+| 8 | 3D Generation | E(3)-equivariant diffusion, point cloud to molecule |
 | 9 | Molecular Docking | Receptor prep, redocking validation, virtual screening |
-| 10 | 3D Generation | E(3)-equivariant diffusion, point cloud to molecule |
-| 11 | ML Force Fields | MACE-OFF geometry optimization, conformer ranking |
-| 12 | Experiment Planning | DMTA cycle orchestration, multi-objective scoring |
+| 10 | ML Force Fields | MACE-OFF geometry optimization, conformer ranking |
+| 11 | Experiment Planning | DMTA cycle orchestration, multi-objective scoring |
+| 12 | Literature Review | Search strategies, source verification, evidence tables |
+| 13 | Kinase SAR | Hinge binder motif analysis, coverage KPI, structure-activity |
+| 14 | Reactivity Safety | Reactive group flagging, project denylists, chronic disease hard rejects |
+| 15 | Protonation & Tautomers | pH-dependent multi-state enumeration, best-state docking |
+| 16 | Docking Interactions | ProLIF interaction fingerprints, hinge H-bond validation, pose QC |
+| 17 | Scaffold-Conditioned Generation | VAE diagnostics, anti-collapse strategies, constrained decoding |
 
 Each skill document is in `skills/*/SKILL.md`.
 
-## Skill Design Principles
+### Skill Design Principles
 
-1. **Philosophy over procedure.** "Always compare MACE to MMFF baseline" beats 50 lines of API docs.
-2. **Decision trees over checklists.** "If X, do A; if Y, do B" matches real drug discovery decisions.
-3. **Failure modes are non-negotiable.** Every skill includes what failure looks like.
-4. **Gates, not guidelines.** Hard thresholds (SA ≤ 6, QED > 0.3) that must be passed.
-5. **One sentence per skill.** If you can't state the core rule in one sentence, the skill is too broad.
+- **Philosophy over procedure.** "Always compare MACE to MMFF baseline" beats 50 lines of API docs.
+- **Decision trees over checklists.** "If X, do A; if Y, do B" matches real drug discovery decisions.
+- **Failure modes are non-negotiable.** Every skill includes what failure looks like.
+- **Gates, not guidelines.** Hard thresholds (SA ≤ 6, QED > 0.3, hinge H-bond = required) that must be passed.
+- **One sentence per skill.** If you can't state the core rule in one sentence, the skill is too broad.
 
-## The Migration Test: IPF/ALK5
+## The Migration Test: IPF/ALK5 (3 Cycles)
 
 After validating on DRD2, I gave the agent an open-ended task with no guidance:
 
 > "Find anti-fibrosis (IPF) drug candidates. Pirfenidone and nintedanib have limited efficacy."
 
-### What the agent did autonomously
-- **Selected ALK5/TGFBR1** as the target (justified by data availability and pathway relevance)
-- **Chose safety-first weighting** (chronic disease → prioritize QED/SA over raw activity)
-- **Requested approval on 3 decisions** before computing anything (plan-before-compute)
-- **Ran the full pipeline**: ChEMBL data → QSAR → VAE generation → ADMET gates → docking → retrosynthesis → scoring
+### Cycle 1: Autonomous Pipeline + Self-Diagnosis
 
-### What the agent found wrong with its own work
-Without being prompted, the agent identified 4 problems:
+**What the agent did autonomously:**
+- Selected ALK5/TGFBR1 as the target (justified by data availability and pathway relevance)
+- Chose safety-first weighting (chronic disease → prioritize QED/SA over raw activity)
+- Requested approval on 3 decisions before computing anything (plan-before-compute)
+- Ran the full pipeline: ChEMBL data → QSAR → VAE generation → ADMET gates → docking → retrosynthesis → scoring
 
-1. **Docking scores weren't competitive** (-7.58 vs co-crystal -10.23)
-2. **Missed a dangerous motif** (hydrazone N-N bond, inappropriate for chronic dosing)
-3. **Insufficient docking coverage** (only 5 of 3000 candidates docked)
-4. **Root cause**: VAE KL collapse → molecules didn't resemble kinase inhibitors
+**What the agent found wrong with its own work (unprompted):**
+1. Docking scores weren't competitive (-7.58 vs co-crystal -10.23)
+2. Missed a dangerous motif (hydrazone N-N bond, inappropriate for chronic dosing)
+3. Insufficient docking coverage (only 5 of 3000 candidates docked)
+4. Root cause: VAE KL collapse → molecules didn't resemble kinase inhibitors
 
-The agent's diagnosis was confirmed by scaffold coverage analysis: <1% kinase hinge-binder motifs in the candidate pool vs 12-23% in training data.
+After remediation, best Vina score improved from -7.58 to -9.591.
 
-After remediation (N-N deny list, Top 300 docking, scaffold analysis), best Vina score improved from -7.58 to -9.591.
+**Interaction analysis (skill 16) revealed:** 4/5 Top5 candidates lacked the fundamental hinge H-bond required for Type I kinase inhibition. Pure Vina ranking completely obscured this failure.
 
-See `case-studies/ipf-cycle1/` for the full report.
+### Cycle 2: Fixing the Generator (6 Controlled Experiments)
+
+The agent systematically attempted to fix the generation problem:
+
+| Step | Strategy | Result | Coverage Ratio |
+|------|----------|--------|---------------|
+| 1 | Cyclical annealing (fix KL collapse) | Latent fixed (AU 0→32), but wrong chemical space | 0.021 |
+| 2 | Training set enrichment | Already at target (47.7%), no change | 0.038 |
+| 3 | Fragment-conditioned VAE (prefix) | Passed — but trivial solution (string concatenation) | 1.379 |
+| 4 | Prefix=False validation | Confirmed: conditioning was fake | 0.002 |
+| 5 | True latent conditioning (concat z, frag_embed) | Model ignores frag_embed | 0.054 |
+| 6 | Auxiliary fragment classifier loss | Class imbalance bug found, fixed, still insufficient | 0.095 |
+| **D** | **Rejection sampling (pragmatic fallback)** | **Passed all gates** | **1.573** |
+
+**Key finding:** SELFIES GRU VAE decoders structurally ignore external conditioning signals. The autoregressive decoder learns to rely on its own hidden state history, bypassing any conditioning input (concat, auxiliary loss, cross-attention — all failed).
+
+**Cycle 2 result:** 4/5 Top5 with hinge H-bond (vs 1/5 in Cycle 1).
+
+### Cycle 3: Logit Bias Decoding
+
+Built on the Cycle 2 finding, tested inference-time interventions:
+
+- **Logit bias (+2.0 on fragment tokens):** Coverage ratio 1.393, efficiency 2.84% (2x better than rejection sampling)
+- Cross-attention conditioning also attempted — failed (coverage 0.049), confirming the architectural limitation
+
+**Cycle 3 result:** 4/5 Top5 with hinge H-bond, best Vina -8.927.
+
+### Progress Across Cycles
+
+| Metric | Cycle 1 | Cycle 2 | Cycle 3 |
+|--------|---------|---------|---------|
+| Top5 hinge H-bond | 1/5 (20%) | 4/5 (80%) | 4/5 (80%) |
+| Candidate pool hinge coverage | 2.47% | 100% | 66.4% |
+| Generation method | Unconditional VAE | Rejection sampling | Logit bias |
+| Best generation efficiency | — | 1.55% | 2.84% |
+
+## Architecture Lesson Learned
+
+Six conditioning experiments across two cycles produced a clear conclusion:
+
+> For SELFIES GRU VAE architectures, **inference-time intervention** (logit bias, rejection sampling) is more effective than **training-time conditioning** (concat, auxiliary loss, cross-attention) for enforcing substructure constraints.
+
+This finding is documented in skill 17 (chem-scaffold-conditioned-gen) as Strategy E, now the recommended default approach.
 
 ## Practical Lessons
 
@@ -110,49 +148,60 @@ See `case-studies/ipf-cycle1/` for the full report.
 - Don't teach what the agent already knows. Start with assessment.
 - Skills encode decision boundaries, not API documentation.
 - Challenge the agent to find its own mistakes. Hand-fed corrections don't stick.
-- Keep skills <500 lines. Split references into separate files.
+- Keep skills < 700 lines. Split references into separate files.
+- Every experiment gets committed — failures are as valuable as successes.
 
 **For AI + drug discovery:**
 - Self-diagnosis > raw capability. An agent that flags mediocre candidates as mediocre is more useful than one that calls them excellent.
 - The generation problem remains hard. No amount of post-hoc filtering fixes a generator exploring the wrong chemical space.
+- Interaction analysis is mandatory. Vina scores alone mask critical binding mode failures (4/5 Top5 lacked hinge H-bonds in Cycle 1).
+- Conditioning small VAEs is harder than it looks. Six failed experiments proved this conclusively.
 
 ## Repository Structure
+
 ```
 ├── README.md                            # This file
 ├── OpenClaw-Agent-Training-Guide.md     # Full methodology (Sections 1-12.9)
-├── PLAYBOOK.md                          # Agent's operational playbook
-├── skill-review-v3.md                   # Agent's self-review (3rd iteration)
+├── PLAYBOOK.md                          # Agent's operational playbook (17 skills)
 ├── skills/
-│   ├── chem-literature/SKILL.md
-│   ├── chem-qsar/SKILL.md
-│   ├── chem-molgen/SKILL.md
-│   ├── chem-retrosynthesis/SKILL.md
-│   ├── chem-gnn/SKILL.md
-│   ├── chem-admet/SKILL.md
-│   ├── chem-rxn-conditions/SKILL.md
-│   ├── chem-llm/SKILL.md
-│   ├── chem-docking/SKILL.md
-│   ├── chem-3dgen/SKILL.md
-│   ├── chem-mlff/SKILL.md
-│   └── chem-experiment/SKILL.md
-└── case-studies/
-    └── ipf-cycle1/
-        ├── cycle1_summary.md
-        └── scaffold_coverage.md
+│   ├── chem-qsar/SKILL.md              # 1: QSAR modeling
+│   ├── chem-gnn/SKILL.md               # 2: Graph neural networks
+│   ├── chem-admet/SKILL.md             # 3: ADMET prediction
+│   ├── chem-retrosynthesis/SKILL.md    # 4: Retrosynthetic analysis
+│   ├── chem-rxn-conditions/SKILL.md    # 5: Reaction conditions
+│   ├── chem-llm/SKILL.md              # 6: Chemical LLM
+│   ├── chem-molgen/SKILL.md           # 7: Molecular generation
+│   ├── chem-3dgen/SKILL.md            # 8: 3D generation
+│   ├── chem-docking/SKILL.md          # 9: Molecular docking
+│   ├── chem-mlff/SKILL.md             # 10: ML force fields
+│   ├── chem-experiment/SKILL.md       # 11: Experiment planning
+│   ├── chem-literature/SKILL.md       # 12: Literature review
+│   ├── chem-kinase-sar/SKILL.md       # 13: Kinase SAR
+│   ├── chem-reactivity-safety/SKILL.md # 14: Reactivity safety
+│   ├── chem-protonation-tautomer/SKILL.md # 15: Protonation & tautomers
+│   ├── chem-docking-interactions/SKILL.md # 16: Docking interactions
+│   └── chem-scaffold-conditioned-gen/SKILL.md # 17: Conditioned generation
+├── case-studies/
+│   └── ipf-cycle1/
+│       ├── cycle1_summary.md
+│       ├── scaffold_coverage.md
+│       └── kinase_hinge_coverage_train_vs_pool.md
+└── .gitignore
 ```
 
 ## Technical Stack
 
-- **Platform**: [OpenClaw](https://github.com/openclaw-ai/openclaw)
-- **Model**: GPT-5.2 via OpenAI Codex OAuth
-- **Infrastructure**: NixOS on WSL2, Docker with GPU passthrough
-- **Chemistry**: RDKit, AutoDock Vina, MACE-OFF, PyTorch, e3nn, ASE
+- **Platform:** [OpenClaw](https://github.com/openclaw/openclaw)
+- **Model:** GPT-5.2 via OpenAI Codex API
+- **Infrastructure:** Linux + Docker (GPU optional; configuration-dependent)
+- **Chemistry:** RDKit, AutoDock Vina, ProLIF, MACE-OFF, PyTorch, e3nn, ASE
 
 ## License
 
 MIT License. Chemical data from ChEMBL is under CC BY-SA 3.0.
 
 ## Citation
+
 ```bibtex
 @misc{chemicalexpert2026,
   title={Teaching AI Agents to Discover Drugs: A Systematic Training Methodology},

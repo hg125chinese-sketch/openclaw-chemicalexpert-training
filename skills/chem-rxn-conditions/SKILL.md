@@ -7,6 +7,15 @@ metadata: { "openclaw": { "emoji": "🌡️", "requires": { "bins": ["python3"],
 
 # Reaction Condition Prediction
 
+### Workspace variable
+
+Use a workspace path variable in commands so this repo does not hard-code a personal directory:
+
+```bash
+OPENCLAW_WORKSPACE=<OPENCLAW_WORKSPACE_PATH>
+```
+
+
 Given a reaction (reactants → product), predict the optimal conditions: solvent, catalyst, temperature, reagents, and expected yield. This skill closes the gap between retrosynthetic planning (skill 4: "what bonds to break") and practical synthesis ("how to actually run it").
 
 ## When to Use
@@ -507,4 +516,4 @@ def estimate_overall_yield(annotated_route):
 
 - **Save condition recommendations** to `research/ai4chem/conditions/<reaction-type>.md`
 - **Annotate routes** from `research/ai4chem/retrosynthesis/` with conditions
-- **Git commit**: `cd /home/node/.openclaw/workspace-chemicalexpert && git add -A && git commit -m "conditions: <reaction> annotation"`
+- **Git commit**: `cd $OPENCLAW_WORKSPACE && git add -A && git commit -m "conditions: <reaction> annotation"`

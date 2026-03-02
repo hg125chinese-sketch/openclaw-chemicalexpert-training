@@ -7,6 +7,15 @@ metadata: { "openclaw": { "emoji": "🔑", "requires": { "bins": ["python3"], "p
 
 # Kinase SAR: Hinge Binders, Scaffold Coverage & Chemical Space KPIs
 
+### Workspace variable
+
+Use a workspace path variable in commands so this repo does not hard-code a personal directory:
+
+```bash
+OPENCLAW_WORKSPACE=<OPENCLAW_WORKSPACE_PATH>
+```
+
+
 Kinase inhibitors are the largest class of targeted cancer and anti-inflammatory drugs. Their design is constrained by well-understood SAR — especially the hinge region interaction. This skill turns kinase medicinal chemistry knowledge into computable, auditable gates.
 
 ## When to Use

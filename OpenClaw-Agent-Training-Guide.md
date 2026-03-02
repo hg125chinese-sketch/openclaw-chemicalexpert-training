@@ -10,7 +10,7 @@
 
 This guide assumes you have a working OpenClaw deployment. The specific setup used during development:
 
-- **Host OS**: NixOS on WSL2 (Windows host), but any Linux with Docker works
+- **Host OS**: Linux with Docker (WSL2 is optional)
 - **GPU**: NVIDIA GPU with CUDA support, passed through to Docker containers
 - **Docker**: Compose-based deployment with GPU passthrough, conda environments for scientific computing
 - **Key packages inside container**: Python 3.11+, RDKit, PyTorch (CUDA), NumPy, pandas, scikit-learn, AutoDock Vina, MACE, ASE
@@ -43,7 +43,7 @@ cp SKILL.md "$QMD_DIR/"
 tbskill-add <skill-name>
 
 # Agent uses skills via QMD search
-QMD=/home/node/.openclaw/.npm-global/bin/qmd
+QMD=/home/nixos/.openclaw/.npm-global/bin/qmd
 $QMD search "<query>" -c <collection> -n 10
 $QMD get qmd://<path> -l 300
 ```

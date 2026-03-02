@@ -7,6 +7,15 @@ metadata: { "openclaw": { "emoji": "🕸️", "requires": { "bins": ["python3"],
 
 # GNN Molecular Property Prediction
 
+### Workspace variable
+
+Use a workspace path variable in commands so this repo does not hard-code a personal directory:
+
+```bash
+OPENCLAW_WORKSPACE=<OPENCLAW_WORKSPACE_PATH>
+```
+
+
 Use Graph Neural Networks to learn directly from molecular graphs instead of precomputed fingerprints. This skill covers when and how to use GNNs, with emphasis on honest comparison against fingerprint baselines.
 
 ## When to Use
@@ -496,4 +505,4 @@ class MultiTaskGNN(nn.Module):
 
 - **Save experiments** to `research/ai4chem/experiments/gnn/<date>-<dataset>-<model>.md`
 - **Compare with skill 2 results**: Cross-reference QSAR baselines
-- **Git commit**: `cd /home/node/.openclaw/workspace-chemicalexpert && git add -A && git commit -m "gnn: <dataset> <model> scaffold-split"`
+- **Git commit**: `cd $OPENCLAW_WORKSPACE && git add -A && git commit -m "gnn: <dataset> <model> scaffold-split"`

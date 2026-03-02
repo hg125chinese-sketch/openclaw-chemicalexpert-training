@@ -7,6 +7,15 @@ metadata: { "openclaw": { "emoji": "⚗️", "requires": { "bins": ["python3"], 
 
 # Protonation & Tautomer Standardization
 
+### Workspace variable
+
+Use a workspace path variable in commands so this repo does not hard-code a personal directory:
+
+```bash
+OPENCLAW_WORKSPACE=<OPENCLAW_WORKSPACE_PATH>
+```
+
+
 A molecule's docking score can swing by 2-3 kcal/mol based solely on its protonation state. If you dock the wrong protomer, your score is wrong — not "approximately wrong," but "comparison-invalidatingly wrong." This skill ensures that docking inputs reflect the molecular species actually present at biological pH.
 
 ## When to Use
