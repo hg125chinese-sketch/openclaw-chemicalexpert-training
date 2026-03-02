@@ -27,6 +27,30 @@ QMD=/home/node/.openclaw/.npm-global/bin/qmd
 - **chem-literature** → chemistry/AI4Chem paper search + deep reads (arXiv / Semantic Scholar / PubChem)
 - **agent-browser** → browser automation / scraping / form filling / UI regression
 
+## Skill routing table (skills 1–17)
+
+原则：用户说“用 skill X”时，按下表路由到对应 **QMD collection**，并遵循该 collection 的 `SKILL.md`。
+
+| # | Skill / QMD collection | Use when | Typical outputs |
+|---:|---|---|---|
+| 1 | **chem-qsar** | 分子性质/QSAR 建模、数据泄漏审计、split/metrics/baseline | scaffold split 结果、RF baseline、对比表、可复现实验脚本 |
+| 2 | **chem-gnn** | 用 GNN 做性质预测或 QSAR 提升 | GCN/GAT/MPNN 训练与对照、指标+参数量 |
+| 3 | **chem-admet** | 规则+ML 的 ADMET 画像/过滤（QED/SA/Lipinski/Veber 等） | per-molecule ADMET profile、过滤门槛、TopN 汇总 |
+| 4 | **chem-retrosynthesis** | 逆合成、可合成性、路线模板、forward-validate | routes.md、每步条件、SA 分数、失败原因 |
+| 5 | **chem-rxn-conditions** | 反应条件建议/产率范围、与 retro 步骤联动 | 条件注释、route yield、兼容性警告 |
+| 6 | **chem-llm** | LLM 辅助化学任务（必须 RDKit/计算校验） | “LLM 生成+校验”结构化输出、可追溯提示词 |
+| 7 | **chem-molgen** | 分子生成（VAE/Transformer/Diffusion）、string metrics、KL collapse 诊断 | validity/uniqueness/novelty/diversity、AU、训练/采样脚本 |
+| 8 | **chem-3dgen** | 3D 生成/形状约束/口袋条件化 | 3D validity、构型/键推断校验、对照结果 |
+| 9 | **chem-docking** | 结构对接（Vina）/redocking 验证/box 定义 | report.json、dock_scores.csv、RMSD gate、版本与输入记录 |
+| 10 | **chem-mlff** | 构象优化/应变能/几何排序（MMFF vs MACE 等） | 优化前后能量、应变能、构象排序 |
+| 11 | **chem-experiment** | DMTA 周期编排（多技能串联、multi-objective gates） | cycle report、决策理由、下一步计划 |
+| 12 | **chem-literature** | 文献检索/深读/证据行号、复现链路 | reading notes、证据引用、复现命令、repo 差异 |
+| 13 | **chem-kinase-sar** | kinase hinge binder motif/KPI、覆盖率审计 | motif 分布、coverage_ratio、KPI 报告 |
+| 14 | **chem-reactivity-safety** | 反应性/毒性/慢病安全 hard reject（denylist） | per-molecule flags、hard reject 统计、survivors.csv |
+| 15 | **chem-protonation-tautomer** | pH 相关 protomer/tautomer、多状态准备与展开 | multi-state 枚举、展开比例、best-state 记录 |
+| 16 | **chem-docking-interactions** | docking pose 的相互作用指纹、hinge H-bond 验证、interaction rerank | hinge yes/no+细节、key residue coverage、rerank 表 |
+| 17 | **chem-scaffold-conditioned-gen** | scaffold/fragment 条件生成（含数据审计、latent conditioning、约束采样等） | 条件命中率、KPI gate、生成集与诊断报告 |
+
 ## Standard QMD workflow (copyable)
 
 ```bash
