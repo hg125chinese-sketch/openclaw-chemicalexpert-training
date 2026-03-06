@@ -7,15 +7,6 @@ metadata: { "openclaw": { "emoji": "🔬", "requires": { "bins": ["python3"], "p
 
 # Molecular Docking & Virtual Screening
 
-### Workspace variable
-
-Use a workspace path variable in commands so this repo does not hard-code a personal directory:
-
-```bash
-OPENCLAW_WORKSPACE=<OPENCLAW_WORKSPACE_PATH>
-```
-
-
 Predict how small molecules bind to protein targets using AutoDock Vina. This skill connects molecular design (skills 2-6) to biological activity — a molecule's predicted binding pose and affinity can validate or reject candidates before synthesis.
 
 ## When to Use
@@ -423,6 +414,237 @@ def virtual_screen(receptor_pdbqt, ligand_list, box, exhaustiveness=16, n_poses=
     return scored
 ```
 
+### 4.3 Batch docking (robust): checkpoint/resume + error taxonomy + env self-check
+
+Batch docking fails in the real world: toolchains break, long runs get interrupted, and some ligands are simply not dockable.
+This section provides a **production-grade** batch docking pattern with:
+
+- **Checkpoint/resume**: restart without losing progress
+- **Partial results**: append/update a CSV after each ligand
+- **Standard error classification**: consistent failure accounting
+- **Environment self-check**: fail fast if required binaries are missing
+
+#### Error taxonomy (standardized)
+
+| code | meaning |
+|---|---|
+| `EMBED_FAIL` | RDKit 3D embedding failed |
+| `PREP_FAIL` | ligand preparation to PDBQT failed (meeko/obabel) |
+| `VINA_FAIL` | Vina internal error (e.g., `tree.h`), or docking failed |
+| `TIMEOUT` | per-ligand docking exceeded time limit |
+
+All failures should be written to `errors.json` with the code + reason.
+
+#### Robust batch docking template (copy/paste)
+
+```python
+#!/opt/conda/envs/chem/bin/python
+import json
+import os
+import shutil
+import signal
+import subprocess
+import time
+from dataclasses import dataclass
+from pathlib import Path
+
+import pandas as pd
+from rdkit import Chem
+from rdkit.Chem import AllChem
+
+
+def env_check(required_bins=("obabel", "vina")):
+    missing = [b for b in required_bins if shutil.which(b) is None]
+    if missing:
+        raise RuntimeError(
+            "Missing required binaries: " + ", ".join(missing)
+            + ". Install them (or ensure they are on PATH) before batch docking."
+        )
+
+
+def classify_exception(msg: str) -> str:
+    m = (msg or "").lower()
+    if "embed" in m or "etkdg" in m:
+        return "EMBED_FAIL"
+    if "meeko" in m or "obabel" in m or "pdbqt" in m or "prepare" in m:
+        return "PREP_FAIL"
+    if "timeout" in m:
+        return "TIMEOUT"
+    return "VINA_FAIL"
+
+
+def rdkit_embed_mmff(smiles: str, seed: int = 0xC0FFEE, max_iters: int = 500) -> Chem.Mol:
+    mol = Chem.MolFromSmiles(smiles)
+    if mol is None:
+        raise ValueError("invalid_smiles")
+    mol = Chem.AddHs(mol)
+    params = AllChem.ETKDGv3(); params.randomSeed = int(seed)
+    cid = AllChem.EmbedMolecule(mol, params)
+    if cid < 0:
+        raise RuntimeError("embed_failed")
+    res = AllChem.MMFFOptimizeMolecule(mol, maxIters=int(max_iters))
+    if res != 0:
+        raise RuntimeError(f"mmff_not_converged(res={res})")
+    return mol
+
+
+@dataclass
+class DockConfig:
+    receptor_pdbqt: str
+    box_center: tuple[float, float, float]
+    box_size: tuple[float, float, float]
+    exhaustiveness: int = 16
+    n_poses: int = 3
+    timeout_s: int = 300
+
+
+def dock_one_with_vina_cli(ligand_pdbqt: Path, out_pdbqt: Path, cfg: DockConfig) -> float:
+    # Uses vina CLI for robust timeout control.
+    # You can also use Python API, but CLI makes TIMEOUT enforcement simpler.
+    cmd = [
+        "vina",
+        "--receptor", cfg.receptor_pdbqt,
+        "--ligand", str(ligand_pdbqt),
+        "--center_x", str(cfg.box_center[0]),
+        "--center_y", str(cfg.box_center[1]),
+        "--center_z", str(cfg.box_center[2]),
+        "--size_x", str(cfg.box_size[0]),
+        "--size_y", str(cfg.box_size[1]),
+        "--size_z", str(cfg.box_size[2]),
+        "--exhaustiveness", str(cfg.exhaustiveness),
+        "--num_modes", str(cfg.n_poses),
+        "--out", str(out_pdbqt),
+    ]
+
+    try:
+        p = subprocess.run(cmd, capture_output=True, text=True, timeout=int(cfg.timeout_s))
+    except subprocess.TimeoutExpired:
+        raise TimeoutError("vina_timeout")
+
+    if p.returncode != 0:
+        raise RuntimeError((p.stderr or p.stdout or "vina_failed")[:400])
+
+    # Parse best score from stdout (vina prints a table).
+    # As a fallback, return NaN and keep the docked pose file.
+    best = None
+    for line in (p.stdout or "").splitlines():
+        if line.strip().startswith("1 "):
+            parts = line.split()
+            if len(parts) >= 2:
+                try:
+                    best = float(parts[1])
+                except Exception:
+                    best = None
+            break
+    if best is None:
+        raise RuntimeError("vina_score_parse_failed")
+    return float(best)
+
+
+def load_done_set(partial_csv: Path) -> set[str]:
+    if not partial_csv.exists():
+        return set()
+    df = pd.read_csv(partial_csv)
+    if "smiles" not in df.columns:
+        return set()
+    # done = rows with a numeric vina_score
+    done = set(df[df["vina_score"].notna()]["smiles"].astype(str).tolist())
+    return done
+
+
+def append_row_atomic(partial_csv: Path, row: dict):
+    partial_csv.parent.mkdir(parents=True, exist_ok=True)
+    df_new = pd.DataFrame([row])
+    if partial_csv.exists():
+        df_old = pd.read_csv(partial_csv)
+        df = pd.concat([df_old, df_new], ignore_index=True)
+    else:
+        df = df_new
+    # Best-effort de-duplication: keep the first successful score per SMILES.
+    if "vina_score" in df.columns:
+        df = df.sort_values(by=["smiles", "vina_score"], ascending=[True, True])
+        df = df.drop_duplicates(subset=["smiles"], keep="first")
+    tmp = partial_csv.with_suffix(partial_csv.suffix + ".tmp")
+    df.to_csv(tmp, index=False)
+    os.replace(tmp, partial_csv)
+
+
+def save_errors(errors_json: Path, err_obj: dict):
+    errors_json.parent.mkdir(parents=True, exist_ok=True)
+    data = []
+    if errors_json.exists():
+        try:
+            data = json.loads(errors_json.read_text(encoding="utf-8"))
+        except Exception:
+            data = []
+    data.append(err_obj)
+    tmp = errors_json.with_suffix(errors_json.suffix + ".tmp")
+    tmp.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    os.replace(tmp, errors_json)
+
+
+def robust_virtual_screen(
+    smiles_list: list[str],
+    out_csv: Path,
+    errors_json: Path,
+    cfg: DockConfig,
+    workdir: Path,
+):
+    env_check(required_bins=("obabel", "vina"))
+
+    done = load_done_set(out_csv)
+
+    for i, smi in enumerate(smiles_list, 1):
+        if smi in done:
+            continue
+
+        t0 = time.time()
+        row = {
+            "idx": i,
+            "smiles": smi,
+            "vina_score": None,
+            "error_code": "",
+            "error": "",
+            "walltime_s": None,
+        }
+
+        try:
+            # (1) RDKit 3D embed (pre-flight; useful for catching geometry issues early)
+            _ = rdkit_embed_mmff(smi)
+
+            # (2) Prepare ligand pdbqt — project-specific; plug in your own function.
+            # Here we assume ligand_pdbqt already exists or is created externally.
+            ligand_pdbqt = workdir / f"lig_{i:04d}.pdbqt"
+            if not ligand_pdbqt.exists():
+                raise RuntimeError("ligand_pdbqt_missing (implement preparation step)")
+
+            # (3) Dock with Vina CLI (timeout enforced)
+            out_pdbqt = workdir / f"lig_{i:04d}_dock.pdbqt"
+            score = dock_one_with_vina_cli(ligand_pdbqt, out_pdbqt, cfg)
+            row["vina_score"] = float(score)
+
+        except Exception as e:
+            msg = str(e)
+            row["error_code"] = classify_exception(msg)
+            row["error"] = msg[:400]
+            save_errors(errors_json, {
+                "smiles": smi,
+                "code": row["error_code"],
+                "error": row["error"],
+            })
+
+        row["walltime_s"] = round(time.time() - t0, 3)
+        append_row_atomic(out_csv, row)
+
+    return pd.read_csv(out_csv)
+```
+
+**How to use it:**
+- Provide `smiles_list` and a ligand preparation step that writes a `lig_XXXX.pdbqt` per molecule.
+- Run once; if interrupted, rerun and it will skip completed SMILES.
+
+---
+
 ## Phase 5: Score Interpretation & Analysis
 
 ### 5.1 Score Guidelines
@@ -661,4 +883,4 @@ Is docking worth running?
 - **Save receptor files** to `research/ai4chem/docking/<target>/receptor/`
 - **Save top hit poses** to `research/ai4chem/docking/<target>/poses/`
 - **Cross-reference** with ADMET profiles (skill 6) and retro routes (skill 4)
-- **Git commit**: `cd $OPENCLAW_WORKSPACE && git add -A && git commit -m "docking: <target> VS results"`
+- **Git commit**: `cd <OPENCLAW_WORKSPACE> && git add -A && git commit -m "docking: <target> VS results"`
