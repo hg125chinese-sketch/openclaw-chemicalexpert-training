@@ -50,6 +50,7 @@ Principle: when the user says "use skill X", route to the corresponding **QMD co
 | 15 | **chem-protonation-tautomer** | pH-dependent protomer/tautomer, multi-state preparation & enumeration | Multi-state enumeration, expansion ratio, best-state records |
 | 16 | **chem-docking-interactions** | Docking pose interaction fingerprints, hinge H-bond validation, interaction rerank | Hinge yes/no + details, key residue coverage, rerank table |
 | 17 | **chem-scaffold-conditioned-gen** | Scaffold/fragment-conditioned generation (data audit, latent conditioning, constrained sampling) | Conditioning hit rate, KPI gate, generation set & diagnosis report |
+| 18 | **chem-pocket-diffusion** | Pocket-conditioned 3D ligand generation (DiffSBDD); substructure inpainting to enforce fragments | generated.sdf + SMILES extraction, validity gate, downstream safety→dock→ProLIF Top5 |
 
 ## Standard QMD workflow (copyable)
 
@@ -258,6 +259,19 @@ When addressing generation quality issues or conditioning on specific scaffolds/
    - Hard gates: validity >= 85%, hinge_binder_coverage_ratio >= 0.3, no full_collapse
    - Change ONLY ONE variable per experiment — commit ALL results (success + failure)
    - Training set audit: verify fragment class distribution before conditioning experiments
+
+## Skill: chem-pocket-diffusion (pocket-conditioned diffusion generation)
+When generating 3D ligands conditioned on a protein pocket (DiffSBDD focus):
+1) Always consult QMD collection: chem-pocket-diffusion
+2) Workflow:
+   - /home/node/.openclaw/.npm-global/bin/qmd search "<query>" -c chem-pocket-diffusion -n 10
+   - /home/node/.openclaw/.npm-global/bin/qmd get qmd://chem-pocket-diffusion/SKILL.md -l 320
+3) Key rules:
+   - Inputs: pocket PDB + reference ligand SDF (used to define pocket region)
+   - Generation produces SDF; immediately extract SMILES and compute validity/uniqueness
+   - Hard gate: validity >= 70% (60–70% warning; <60% fail)
+   - Integrate into standard pipeline: safety screen → Vina docking → ProLIF hinge H-bond KPI + rerank
+   - Substructure inpainting exists, but treat as untrusted until validated end-to-end
 
 ## Browser automation
 
