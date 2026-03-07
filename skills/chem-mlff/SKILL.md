@@ -7,15 +7,6 @@ metadata: { "openclaw": { "emoji": "⚛️", "requires": { "bins": ["python3"], 
 
 # Machine-Learned Force Fields
 
-### Workspace variable
-
-Use a workspace path variable in commands so this repo does not hard-code a personal directory:
-
-```bash
-OPENCLAW_WORKSPACE=<OPENCLAW_WORKSPACE_PATH>
-```
-
-
 Use pre-trained MACE models for molecular energy evaluation, geometry optimization, and conformer ranking at near-DFT accuracy. This replaces MMFF/UFF (RDKit defaults) when accuracy matters — binding pose refinement, strain energy calculation, or conformational analysis.
 
 ## When to Use
@@ -171,7 +162,7 @@ def optimize_geometry(smiles_or_atoms, model_type="mace-off", fmax=0.01,
         "energy_initial_eV": round(float(e_initial), 4),
         "energy_final_eV": round(float(e_final), 4),
         "energy_diff_eV": round(float(e_final - e_initial), 4),
-        "energy_diff_kcal": round(float((e_final - e_initial) * 23.06), 2),
+        "energy_diff_kcal": round(float((e_final - e_initial) * 23.0605), 2),
         "max_force_eV_A": round(float(max_force), 6),
         "converged": bool(converged),
         "n_steps": opt.nsteps,
@@ -276,7 +267,7 @@ def generate_and_rank_conformers(smiles, n_confs=50, model_type="mace-off",
         try:
             e = atoms.get_potential_energy()
             energies.append({"conf_id": cid, "energy_eV": float(e),
-                           "energy_kcal": float(e * 23.06)})
+                           "energy_kcal": float(e * 23.0605)})
         except:
             energies.append({"conf_id": cid, "energy_eV": None, "error": True})
 
@@ -334,7 +325,7 @@ def strain_energy(smiles_or_mol, bound_conf_positions=None, model_type="mace-off
         e_bound = bound_atoms.get_potential_energy()
 
         if e_min is not None:
-            strain = (e_bound - e_min) * 23.06  # eV → kcal/mol
+            strain = (e_bound - e_min) * 23.0605  # eV → kcal/mol
             print(f"Strain energy: {strain:.2f} kcal/mol")
             return {"strain_kcal": round(strain, 2), "e_bound_eV": e_bound, "e_min_eV": e_min}
 
@@ -440,5 +431,5 @@ When to use MACE over MMFF:
 - [ ] **Convergence confirmed**: fmax < threshold? n_steps reasonable?
 - [ ] **MMFF comparison**: Reported alongside for sanity check?
 - [ ] **Strain interpreted**: < 3 kcal/mol = acceptable, > 10 = suspicious pose
-- [ ] **Units correct**: eV vs kcal/mol clearly labeled (1 eV = 23.06 kcal/mol)?
+- [ ] **Units correct**: eV vs kcal/mol clearly labeled (1 eV = 23.0605 kcal/mol)?
 - [ ] **Device stated**: CPU or GPU? Affects reproducibility of float precision.
