@@ -7,15 +7,6 @@ metadata: { "openclaw": { "emoji": "⚗️", "requires": { "bins": ["python3"], 
 
 # Retrosynthetic Analysis
 
-### Workspace variable
-
-Use a workspace path variable in commands so this repo does not hard-code a personal directory:
-
-```bash
-OPENCLAW_WORKSPACE=<OPENCLAW_WORKSPACE_PATH>
-```
-
-
 Break down target molecules into purchasable starting materials through systematic disconnection. This skill covers manual analysis, template-based methods, and template-free ML approaches.
 
 ## When to Use
@@ -308,6 +299,7 @@ def get_sa_score(mol):
         sa_path = os.path.join(RDConfig.RDContribDir, "SA_Score")
         if sa_path not in sys.path:
             sys.path.insert(0, sa_path)
+        # Optional: see RDKit Contrib/SA_Score for standalone implementation
         import sascorer
         return sascorer.calculateScore(mol)
     except ImportError:
@@ -650,4 +642,4 @@ def score_molecule_for_synthesis(smi):
 - **Save analyses** to `research/ai4chem/retrosynthesis/<target-slug>.md`
 - **Save template libraries** to `research/ai4chem/retrosynthesis/templates/`
 - **Cross-reference** with generated molecules from chem-molgen experiments
-- **Git commit**: `cd $OPENCLAW_WORKSPACE && git add -A && git commit -m "retro: <target> analysis"`
+- **Git commit**: `cd /home/node/.openclaw/workspace-chemicalexpert && git add -A && git commit -m "retro: <target> analysis"`

@@ -7,15 +7,6 @@ metadata: { "openclaw": { "emoji": "🔍", "requires": { "bins": ["python3", "pl
 
 # Docking Interaction Analysis: From Scores to Mechanistic Evidence
 
-### Workspace variable
-
-Use a workspace path variable in commands so this repo does not hard-code a personal directory:
-
-```bash
-OPENCLAW_WORKSPACE=<OPENCLAW_WORKSPACE_PATH>
-```
-
-
 A Vina score of -9.5 means nothing if the ligand isn't making the right contacts. Two molecules can have identical docking scores but completely different interaction profiles — one forming the critical hinge H-bond, the other wedged into the wrong subpocket. This skill turns docking outputs into auditable interaction evidence that a medicinal chemist can evaluate.
 
 ## When to Use
@@ -70,6 +61,7 @@ Always start by profiling the co-crystal ligand. This is your ground truth.
 ```python
 #!/opt/conda/envs/chem/bin/python
 """Extract reference interaction profile from a co-crystal structure using PLIP."""
+# Optional: requires OpenBabel C++ library. Default workflow uses ProLIF instead
 from plip.structure.preparation import PDBComplex
 
 

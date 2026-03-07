@@ -165,6 +165,7 @@ def receptor_to_pdbqt(pdb_path, output_path=None):
 ```python
 from rdkit import Chem
 from rdkit.Chem import AllChem
+# Optional: pip install meeko. Fallback: use obabel CLI for PDBQT conversion
 import meeko
 
 def prepare_ligand(smiles, output_path="ligand.pdbqt"):
@@ -313,6 +314,7 @@ Padding from reference ligand:
 ### 4.1 Single Docking (Python API)
 
 ```python
+# Optional: pip install vina. Default workflow uses vina CLI instead
 from vina import Vina
 
 def dock_single(receptor_pdbqt, ligand_pdbqt, box, exhaustiveness=32, n_poses=9):

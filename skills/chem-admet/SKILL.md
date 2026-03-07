@@ -7,15 +7,6 @@ metadata: { "openclaw": { "emoji": "💊", "requires": { "bins": ["python3"], "p
 
 # ADMET Prediction
 
-### Workspace variable
-
-Use a workspace path variable in commands so this repo does not hard-code a personal directory:
-
-```bash
-OPENCLAW_WORKSPACE=<OPENCLAW_WORKSPACE_PATH>
-```
-
-
 Predict drug-likeness and pharmacokinetic properties. ADMET is the bridge between molecular design (skills 2-5) and real-world drug development. A beautiful molecule is worthless if it can't be absorbed, distributed, metabolized, excreted safely, and is non-toxic.
 
 ## When to Use
@@ -198,6 +189,7 @@ tasks, datasets, transformers = dc.molnet.load_tox21(featurizer="ECFP")
 # Option B: via TDC (Therapeutics Data Commons) — more endpoints
 # pip install PyTDC (if not installed)
 try:
+    # Optional: pip install PyTDC
     from tdc.single_pred import ADME, Tox
     # Caco-2
     data = ADME(name="Caco2_Wang")
@@ -386,6 +378,7 @@ def combined_drugability_score(smi):
     if sa_path not in sys.path:
         sys.path.insert(0, sa_path)
     try:
+        # Optional: see RDKit Contrib/SA_Score for standalone implementation
         import sascorer
         sa = sascorer.calculateScore(Chem.MolFromSmiles(smi))
     except ImportError:
@@ -417,4 +410,4 @@ def combined_drugability_score(smi):
 - **Save profiles** to `research/ai4chem/admet/<date>-<candidate-set>.md`
 - **Cross-reference** with generated molecules from chem-molgen
 - **Cross-reference** with retrosynthesis assessments from chem-retrosynthesis
-- **Git commit**: `cd $OPENCLAW_WORKSPACE && git add -A && git commit -m "admet: <candidate-set> profiling"`
+- **Git commit**: `cd /home/node/.openclaw/workspace-chemicalexpert && git add -A && git commit -m "admet: <candidate-set> profiling"`
