@@ -7,15 +7,6 @@ metadata: { "openclaw": { "emoji": "⚗️", "requires": { "bins": ["python3"], 
 
 # Protonation & Tautomer Standardization
 
-### Workspace variable
-
-Use a workspace path variable in commands so this repo does not hard-code a personal directory:
-
-```bash
-OPENCLAW_WORKSPACE=<OPENCLAW_WORKSPACE_PATH>
-```
-
-
 A molecule's docking score can swing by 2-3 kcal/mol based solely on its protonation state. If you dock the wrong protomer, your score is wrong — not "approximately wrong," but "comparison-invalidatingly wrong." This skill ensures that docking inputs reflect the molecular species actually present at biological pH.
 
 ## When to Use
@@ -32,7 +23,15 @@ A molecule's docking score can swing by 2-3 kcal/mol based solely on its protona
 2. **Enumerate, don't guess.** At pH 7.4, many groups are partially ionized. Don't pick one state — generate the 2-3 most relevant states and dock them all. Report the best score with the state that produced it.
 3. **Tautomers are as important as protomers.** A pyridone vs hydroxypyridine tautomer has completely different H-bond donor/acceptor patterns. Docking one and not the other misses half the story.
 4. **Standardize first, then protonate.** Remove salts, neutralize charges from drawing conventions, canonicalize, THEN enumerate physiological states. Order matters.
-5. **Document the state.** Every docking result must record which protomer/tautomer produced that score. "Vina = -8.5" without specifying the ionization state is incomplete data.
+5. **Document the state (mandatory).** Every docking/QC result must record which protomer/tautomer produced that score.
+
+Minimum required fields downstream:
+- `smiles_state` (the exact SMILES docked/QC’d)
+- `formal_charge`
+- `protomer_source` (e.g., "imidazole protonated (+1)", "standardized neutral", etc.)
+- (optional but recommended) `tautomer_source`
+
+"Vina = -8.5" without specifying the ionization state is incomplete data.
 
 ## Phase 1: Molecule Standardization
 
@@ -165,25 +164,40 @@ IONIZABLE_GROUPS = {
 
 ### 2.2 Identify Ionizable Sites
 
-```python
-def identify_ionizable_groups(smi):
-    """Find all ionizable groups in a molecule and predict their state at pH 7.4.
+### 2.3 Confidence scoring (dominant protomer reliability)
 
-    Returns:
-        dict with:
-        - smiles: input
-        - valid: bool
-        - groups: list of identified ionizable groups
-        - needs_enumeration: bool (True if any group is partially ionized at pH 7.4)
-        - recommendation: str
+Assign a *dominant-protomer confidence* label so downstream steps know whether they can safely use one state or must enumerate.
+
+**Rules (pH 7.4):**
+- **HIGH**: no ionizable groups detected, OR all ionizable groups have pKa ranges far from 7.4 (more than **2 pH units** away)
+- **MEDIUM**: ionizable groups exist, but dominant state is clear (no partial-ionization overlap with ~7.4)
+- **LOW**: at least one group has pKa range overlapping **7.4 ± 1** (multiple competing protomers likely)
+
+Implementation uses the same heuristic pKa ranges as `identify_ionizable_groups()`.
+
+```python
+def identify_ionizable_groups(smi, ph=7.4):
+    """Find ionizable groups and estimate dominant-protomer confidence.
+
+    Confidence rules (heuristic):
+    - HIGH: no ionizable groups, OR all pKa ranges are far from pH by >2 units
+    - LOW: any group overlaps pH±1 (partial ionization)
+    - MEDIUM: otherwise
     """
     mol = Chem.MolFromSmiles(smi)
     if mol is None:
-        return {"smiles": smi, "valid": False, "groups": [],
-                "needs_enumeration": False}
+        return {
+            "smiles": smi,
+            "valid": False,
+            "groups": [],
+            "needs_enumeration": False,
+            "protomer_confidence": "LOW",
+            "recommendation": "INVALID: cannot parse SMILES",
+        }
 
     groups = []
     needs_enum = False
+    near_ph = False
 
     for name, info in IONIZABLE_GROUPS.items():
         pat = Chem.MolFromSmarts(info["smarts"])
@@ -192,32 +206,47 @@ def identify_ionizable_groups(smi):
         matches = mol.GetSubstructMatches(pat)
         if matches:
             pka_lo, pka_hi = info["pka_range"]
-            # If pKa range overlaps pH 6.4-8.4, both states are relevant
-            partially_ionized = (pka_lo <= 8.4) and (pka_hi >= 6.4)
+            partially_ionized = (pka_lo <= (ph + 1.0)) and (pka_hi >= (ph - 1.0))
             if partially_ionized:
                 needs_enum = True
+                near_ph = True
 
             groups.append({
                 "name": name,
                 "n_matches": len(matches),
                 "pka_range": info["pka_range"],
-                "at_ph74": info["at_ph74"],
+                "at_ph": info["at_ph74"],
                 "partially_ionized": partially_ionized,
                 "note": info["note"],
             })
 
-    if needs_enum:
-        recommendation = "ENUMERATE: molecule has groups with pKa near 7.4. Dock multiple protomers."
-    elif groups:
-        recommendation = "ASSIGN: all ionizable groups have clear state at pH 7.4. Use dominant protomer."
-    else:
+    far_from_ph = True
+    for g in groups:
+        lo, hi = g["pka_range"]
+        # if range overlaps [ph-2, ph+2], it's not far
+        if (lo <= (ph + 2.0)) and (hi >= (ph - 2.0)):
+            far_from_ph = False
+            break
+
+    if not groups:
+        confidence = "HIGH"
         recommendation = "NEUTRAL: no ionizable groups detected. Dock as-is."
+    elif near_ph:
+        confidence = "LOW"
+        recommendation = f"ENUMERATE: molecule has groups with pKa near pH={ph}. Dock multiple protomers."
+    elif far_from_ph:
+        confidence = "HIGH"
+        recommendation = f"ASSIGN: ionizable groups exist but pKa far from pH={ph}. Use dominant protomer."
+    else:
+        confidence = "MEDIUM"
+        recommendation = f"ASSIGN: ionizable groups exist; dominant state likely. Consider enumeration if sensitive."
 
     return {
         "smiles": smi,
         "valid": True,
         "groups": groups,
         "needs_enumeration": needs_enum,
+        "protomer_confidence": confidence,
         "recommendation": recommendation,
     }
 ```
@@ -461,8 +490,8 @@ def prepare_docking_inputs(smi, ph=7.4, max_tautomers=5,
 
     std_smi = std["standardized"]
 
-    # Step 2: Identify ionizable groups
-    ionizable = identify_ionizable_groups(std_smi)
+    # Step 2: Identify ionizable groups + confidence
+    ionizable = identify_ionizable_groups(std_smi, ph=ph)
 
     # Step 3: Enumerate protomers
     prot = enumerate_protomers(std_smi, ph=ph)
@@ -471,12 +500,16 @@ def prepare_docking_inputs(smi, ph=7.4, max_tautomers=5,
     all_states = []
     seen = set()
 
+    # LOW confidence → dock all reasonable protomers/tautomers
+    # MEDIUM/HIGH → still enumerate (safe default), but downstream can treat
+    # the best-scoring state as the reported dominant state.
     for p_smi, p_desc in prot["protomers"]:
         tauts = enumerate_tautomers(p_smi, max_tautomers=max_tautomers)
         for t_smi in tauts["tautomers"]:
             if t_smi not in seen:
                 seen.add(t_smi)
                 desc = f"{p_desc} | tautomer"
+                # protomer_source is required for downstream traceability
                 all_states.append((t_smi, desc))
 
         # Also include the protomer itself (canonical tautomer)
@@ -484,7 +517,7 @@ def prepare_docking_inputs(smi, ph=7.4, max_tautomers=5,
             seen.add(p_smi)
             all_states.append((p_smi, p_desc))
 
-    # Step 5: Always include neutral standardized form
+    # Step 5: Optionally include neutral standardized form
     if include_neutral and std_smi not in seen:
         seen.add(std_smi)
         all_states.append((std_smi, "standardized neutral"))
@@ -495,6 +528,7 @@ def prepare_docking_inputs(smi, ph=7.4, max_tautomers=5,
         "docking_inputs": all_states,
         "n_states": len(all_states),
         "ionizable_groups": ionizable,
+        "protomer_confidence": ionizable.get("protomer_confidence", "LOW"),
     }
 ```
 
