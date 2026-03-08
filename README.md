@@ -4,12 +4,13 @@ How I trained an LLM agent to autonomously run drug discovery workflows — and 
 
 ## TL;DR
 
-I trained an AI agent ("ChemicalExpert") with **17 specialized chemistry skills** using a systematic 7-step methodology. The agent learned to autonomously plan and execute Design-Make-Test-Analyze (DMTA) cycles for drug discovery. Over **3 iterative cycles** on the same target, the agent:
+I trained an AI agent ("ChemicalExpert") with **18 specialized chemistry skills** using a systematic 7-step methodology. The agent learned to autonomously plan and execute Design-Make-Test-Analyze (DMTA) cycles for drug discovery. Over **5 iterative cycles** on the same target, the agent:
 
 - Diagnosed its own output quality problems (VAE KL collapse, missing hinge binders)
 - Ran 6 controlled experiments to fix molecular generation, documenting every failure
 - Improved Top5 candidate quality from **20% to 80%** passing the critical hinge H-bond gate
 - Discovered that SELFIES GRU VAE decoders structurally ignore conditioning signals — a finding validated across 6 independent experiments
+- Upgraded to pocket-conditioned 3D diffusion (DiffSBDD), achieving **100% DFT pass rate** and the best binding score across all cycles
 
 ## The Problem
 
@@ -42,7 +43,7 @@ Through trial and error training two agents (a debugging agent and ChemicalExper
 
 **Step 7: Self-Review** — Ask the agent to write its own skill review. Compare against your observations. Discrepancies reveal shallow understanding.
 
-## The 17 Skills
+## The 18 Skills
 
 | # | Skill | Core Capability |
 |---:|---|---|
@@ -54,15 +55,16 @@ Through trial and error training two agents (a debugging agent and ChemicalExper
 | 6 | Chemical LLM | When to use LLM reasoning vs computation |
 | 7 | Molecular Generation | SELFIES VAE, KL collapse detection, novelty metrics |
 | 8 | 3D Generation | E(3)-equivariant diffusion, point cloud to molecule |
-| 9 | Molecular Docking | Receptor prep, redocking validation, virtual screening |
-| 10 | ML Force Fields | MACE-OFF geometry optimization, conformer ranking |
+| 9 | Molecular Docking | Receptor prep, redocking validation, virtual screening, batch robustness |
+| 10 | ML Force Fields | MACE-OFF geometry optimization, conformer ranking, QC prescreen |
 | 11 | Experiment Planning | DMTA cycle orchestration, multi-objective scoring |
 | 12 | Literature Review | Search strategies, source verification, evidence tables |
 | 13 | Kinase SAR | Hinge binder motif analysis, coverage KPI, structure-activity |
 | 14 | Reactivity Safety | Reactive group flagging, project denylists, chronic disease hard rejects |
-| 15 | Protonation & Tautomers | pH-dependent multi-state enumeration, best-state docking |
+| 15 | Protonation & Tautomers | pH-dependent multi-state enumeration, confidence scoring, best-state docking |
 | 16 | Docking Interactions | ProLIF interaction fingerprints, hinge H-bond validation, pose QC |
-| 17 | Scaffold-Conditioned Generation | VAE diagnostics, anti-collapse strategies, constrained decoding |
+| 17 | Scaffold-Conditioned Generation | VAE diagnostics, anti-collapse strategies, constrained decoding (Strategy E) |
+| 18 | Pocket-Conditioned Diffusion | DiffSBDD 3D ligand generation, GPU inference, substructure inpainting |
 
 Each skill document is in `skills/*/SKILL.md`.
 
@@ -74,7 +76,7 @@ Each skill document is in `skills/*/SKILL.md`.
 - **Gates, not guidelines.** Hard thresholds (SA ≤ 6, QED > 0.3, hinge H-bond = required) that must be passed.
 - **One sentence per skill.** If you can't state the core rule in one sentence, the skill is too broad.
 
-## The Migration Test: IPF/ALK5 (3 Cycles)
+## The Migration Test: IPF/ALK5 (5 Cycles)
 
 After validating on DRD2, I gave the agent an open-ended task with no guidance:
 
@@ -125,22 +127,44 @@ Built on the Cycle 2 finding, tested inference-time interventions:
 
 **Cycle 3 result:** 4/5 Top5 with hinge H-bond, best Vina -8.927.
 
+### Cycle 4: Full CE↔QE Collaboration
+
+The complete multi-agent loop with QuantumExpert (QE) for DFT verification:
+
+- Generated 1000 molecules (logit bias) → safety screen (466 survivors) → docked 50 → Top5 (3/5 hinge H-bond)
+- QC pre-processing (RDKit + protomer + MACE prescreen) → 2 molecules handed to QE
+- QE batch DFT (B97-D/def2-SVP) → 1 PASS, 1 OPT_FAIL (50% fail rate)
+- Retrosynthesis completed for all PASS molecules
+
+### Cycle 5: Pocket-Conditioned Diffusion (DiffSBDD)
+
+Replaced the SELFIES VAE with DiffSBDD, a pocket-conditioned 3D diffusion model:
+
+- **Generation:** 98 molecules from ALK5 pocket, 89 valid (90.8%), no logit bias needed
+- **Safety:** 28% reject rate (vs VAE's 53%) — DiffSBDD produces cleaner molecules
+- **Docking:** Best Vina -10.270, surpassing the co-crystal ligand (-10.23)
+- **Key discovery:** DiffSBDD's 3D coordinates are optimized for docking pose, not molecular stability (MACE strain 450-630 kcal/mol). Solution: use DiffSBDD for molecular design, RDKit re-embed for QC geometry.
+- **DFT:** 3/3 PASS (100% vs Cycle 3-4's 50%) — best candidate Vina -10.01, score_final 10.404
+
 ### Progress Across Cycles
 
-| Metric | Cycle 1 | Cycle 2 | Cycle 3 |
-|--------|---------|---------|---------|
-| Top5 hinge H-bond | 1/5 (20%) | 4/5 (80%) | 4/5 (80%) |
-| Candidate pool hinge coverage | 2.47% | 100% | 66.4% |
-| Generation method | Unconditional VAE | Rejection sampling | Logit bias |
-| Best generation efficiency | — | 1.55% | 2.84% |
+| Metric | Cycle 1 | Cycle 2 | Cycle 3 | Cycle 4 | Cycle 5 |
+|--------|---------|---------|---------|---------|---------|
+| Top5 hinge H-bond | 1/5 (20%) | 4/5 (80%) | 4/5 (80%) | 3/5 (60%) | 3/5 (60%) |
+| Generation method | Unconditional VAE | Rejection sampling | Logit bias | Logit bias | DiffSBDD |
+| Best Vina score | -9.591 | -9.158 | -8.927 | -9.997 | **-10.270** |
+| DFT PASS rate | — | — | 50% | 50% | **100%** |
+| Safety reject rate | 29% | 41% | 54% | 53% | **28%** |
 
-## Architecture Lesson Learned
+**CE↔QE collaboration statistics:** 9 molecules submitted for DFT across 3 cycles. 6 PASS, 3 OPT_FAIL (33% overall fail rate; 0% in Cycle 5).
 
-Six conditioning experiments across two cycles produced a clear conclusion:
+## Architecture Lessons Learned
 
-> For SELFIES GRU VAE architectures, **inference-time intervention** (logit bias, rejection sampling) is more effective than **training-time conditioning** (concat, auxiliary loss, cross-attention) for enforcing substructure constraints.
+**1. VAE conditioning failure.** Six experiments across two cycles demonstrated that SELFIES GRU VAE decoders structurally ignore external conditioning signals. Inference-time intervention (logit bias, rejection sampling) is the validated solution. Documented as Strategy E in skill 17.
 
-This finding is documented in skill 17 (chem-scaffold-conditioned-gen) as Strategy E, now the recommended default approach.
+**2. Pocket-conditioned diffusion changes everything.** DiffSBDD produces better molecules (lower safety reject, better Vina scores, higher DFT pass rate) without needing any conditioning hacks. But its 3D coordinates are not suitable for QC — use the SMILES, not the geometry.
+
+**3. Interaction analysis is mandatory.** Vina scores alone mask critical binding mode failures. In Cycle 1, 80% of top candidates lacked hinge H-bonds despite acceptable scores.
 
 ## Practical Lessons
 
@@ -154,15 +178,16 @@ This finding is documented in skill 17 (chem-scaffold-conditioned-gen) as Strate
 **For AI + drug discovery:**
 - Self-diagnosis > raw capability. An agent that flags mediocre candidates as mediocre is more useful than one that calls them excellent.
 - The generation problem remains hard. No amount of post-hoc filtering fixes a generator exploring the wrong chemical space.
-- Interaction analysis is mandatory. Vina scores alone mask critical binding mode failures (4/5 Top5 lacked hinge H-bonds in Cycle 1).
-- Conditioning small VAEs is harder than it looks. Six failed experiments proved this conclusively.
+- Pocket-conditioned generation (DiffSBDD) is a step change over string-based VAEs for structure-based drug design.
+- Multi-agent collaboration works. CE→QE handoff with typed JSON contracts and explicit gates closed the loop from generation to quantum-chemical verification.
 
 ## Repository Structure
 
 ```
 ├── README.md                            # This file
 ├── OpenClaw-Agent-Training-Guide.md     # Full methodology (Sections 1-12.9)
-├── PLAYBOOK.md                          # Agent's operational playbook (17 skills)
+├── PLAYBOOK.md                          # Agent's operational playbook (18 skills)
+├── SECURITY.md                          # Security & privacy guidelines
 ├── skills/
 │   ├── chem-qsar/SKILL.md              # 1: QSAR modeling
 │   ├── chem-gnn/SKILL.md               # 2: Graph neural networks
@@ -180,12 +205,15 @@ This finding is documented in skill 17 (chem-scaffold-conditioned-gen) as Strate
 │   ├── chem-reactivity-safety/SKILL.md # 14: Reactivity safety
 │   ├── chem-protonation-tautomer/SKILL.md # 15: Protonation & tautomers
 │   ├── chem-docking-interactions/SKILL.md # 16: Docking interactions
-│   └── chem-scaffold-conditioned-gen/SKILL.md # 17: Conditioned generation
+│   ├── chem-scaffold-conditioned-gen/SKILL.md # 17: Conditioned generation
+│   └── chem-pocket-diffusion/SKILL.md # 18: Pocket-conditioned diffusion
 ├── case-studies/
-│   └── ipf-cycle1/
-│       ├── cycle1_summary.md
-│       ├── scaffold_coverage.md
-│       └── kinase_hinge_coverage_train_vs_pool.md
+│   ├── ipf-cycle1/                    # Cycle 1: autonomous pipeline + self-diagnosis
+│   ├── ipf-cycle2/                    # Cycle 2: 6 conditioning experiments
+│   ├── ipf-cycle3/                    # Cycle 3: logit bias decoding
+│   ├── ipf-cycle4/                    # Cycle 4: full CE↔QE collaboration
+│   ├── ipf-cycle5/                    # Cycle 5: DiffSBDD + 100% DFT pass
+│   └── ipf-project-conclusion.md      # Final results across all cycles
 └── .gitignore
 ```
 
@@ -194,7 +222,8 @@ This finding is documented in skill 17 (chem-scaffold-conditioned-gen) as Strate
 - **Platform:** [OpenClaw](https://github.com/openclaw/openclaw)
 - **Model:** GPT-5.2 via OpenAI Codex API
 - **Infrastructure:** Linux + Docker (GPU optional; configuration-dependent)
-- **Chemistry:** RDKit, AutoDock Vina, ProLIF, MACE-OFF, PyTorch, e3nn, ASE
+- **Chemistry:** RDKit, AutoDock Vina, ProLIF, MACE-OFF, DiffSBDD, PyTorch, e3nn, ASE
+- **Quantum Chemistry (via QuantumExpert):** PySCF (B97-D/def2-SVP)
 
 ## License
 
