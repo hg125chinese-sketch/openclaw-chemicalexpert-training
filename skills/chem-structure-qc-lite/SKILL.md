@@ -1,6 +1,9 @@
 ---
 name: chem-structure-qc-lite
-description: Lightweight geometry/pose QC for AI-generated 3D ligands and docking poses using PoseBusters (bust) + RDKit sanity checks. Two checkpoints: post-generation SDF and post-docking poses. Outputs standardized qc.tsv + report with pb_valid, warnings, and failure reasons; includes recovery path (RDKit re-embed + minimize).
+description: >-
+  Lightweight geometry/pose QC for AI-generated 3D ligands and docking poses using PoseBusters (bust) + RDKit sanity checks.
+  Two checkpoints: post-generation SDF and post-docking poses.
+  Outputs standardized qc.tsv + report with pb_valid, warnings, and failure reasons; includes recovery path (RDKit re-embed + minimize).
 homepage: https://docs.openclaw.ai
 metadata: { "openclaw": { "emoji": "🧯", "requires": { "bins": ["bust"], "python": ["pandas", "numpy"] } } }
 ---
