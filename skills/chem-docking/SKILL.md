@@ -651,6 +651,55 @@ def robust_virtual_screen(
 
 ---
 
+### 4.4 Multi-seed docking robustness (pose stability + hinge robustness)
+
+Single-run docking can be a **silent failure**: different random seeds can produce different top poses, and hinge H-bonds may only appear in a subset of runs.
+
+Use this on a **shortlist** (typically Top50–Top100 after gates like safety / basic plausibility) to quantify robustness.
+
+#### Protocol (3–5 seeds per molecule)
+
+1) For each molecule, run docking **K times** with different seeds (K=3–5).
+   - If using vina CLI, pass `--seed <int>`.
+   - Keep all other settings identical.
+2) Collect the **top pose** from each run.
+3) RMSD-cluster these top poses (within-molecule) to measure pose convergence.
+4) Compute **hinge H-bond consistency** across seeds (requires ProLIF hinge check per pose, or a lightweight hinge detector).
+
+#### Gates (default)
+
+- `pose_convergence`:
+  - at least **3/5 runs** have top-pose RMSD < **2.0 Å** to the dominant cluster representative.
+- `hinge_robustness`:
+  - hinge H-bond appears in **≥ 3/5 runs**.
+
+Interpretation:
+- Passing both gates means the molecule’s docking pose and hinge evidence are **not seed-fragile**.
+- Failing either gate means: treat as lower confidence; consider re-docking with higher exhaustiveness, alternative protonation state, or deprioritize.
+
+#### Output (per-molecule robustness report)
+
+Write a standardized CSV/TSV with one row per molecule:
+
+- `mol_id`
+- `n_seeds`
+- `n_converged` (count of runs in dominant cluster within 2.0 Å)
+- `hinge_consistency` (fraction in [0,1])
+- `robust` (bool; `pose_convergence && hinge_robustness`)
+
+Example schema:
+
+```text
+mol_id,n_seeds,n_converged,hinge_consistency,robust
+cycle5_hinge_1,5,4,0.8,True
+```
+
+#### Practical note on RMSD
+
+- RMSD clustering requires **consistent atom mapping** across poses.
+- If your pipeline outputs SDF poses with consistent atom order, you can compute RMSD by RDKit alignment (e.g., `rdMolAlign.AlignMol`).
+- If you only have PDBQT, convert to SDF (or RDKit Mol) in a way that preserves atom correspondence.
+
 ## Phase 5: Score Interpretation & Analysis
 
 ### 5.1 Score Guidelines
