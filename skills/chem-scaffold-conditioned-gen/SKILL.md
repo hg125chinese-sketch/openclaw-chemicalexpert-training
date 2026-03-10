@@ -18,6 +18,14 @@ OPENCLAW_WORKSPACE=<OPENCLAW_WORKSPACE_PATH>
 
 Unconditional molecular generation (vanilla VAE on SELFIES/SMILES) explores broad chemical space but has no mechanism to stay near the target's pharmacophore. For kinase inhibitors, this means the generator happily produces molecules without hinge binder motifs — the one structural feature that makes a kinase inhibitor a kinase inhibitor. This skill fixes generation at the source instead of relying on post-hoc filtering.
 
+### Tool selection guidance (post-Cycle5)
+
+- Use **string VAE + conditioning / constrained decoding** (this skill) when you want **fast iteration** and **controlled ablations** on conditioning mechanisms (rejection sampling vs logit bias, etc.).
+- Use **pocket-conditioned diffusion (DiffSBDD)** when you want **structure-based design** and the protein pocket is the primary conditioning signal.
+
+Recommended handoff for DiffSBDD into the same DMTA loop:
+`DiffSBDD → RDKit sanitize/SMILES extraction → safety (denylist) → Vina docking → ProLIF interactions → QC prescreen (RDKit re-embed + MACE) → QE DFT`
+
 ## When to Use
 
 - When hinge binder coverage ratio (skill 13) is CRITICAL (<0.5 of training set frequency)

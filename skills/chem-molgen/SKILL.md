@@ -7,15 +7,6 @@ metadata: { "openclaw": { "emoji": "🧪", "requires": { "bins": ["python3"], "p
 
 # Molecular Generative Models
 
-### Workspace variable
-
-Use a workspace path variable in commands so this repo does not hard-code a personal directory:
-
-```bash
-OPENCLAW_WORKSPACE=<OPENCLAW_WORKSPACE_PATH>
-```
-
-
 Design, train, and rigorously evaluate models that generate novel molecules. This skill covers string-based (VAE, Transformer, Diffusion on SMILES/SELFIES) and graph-based approaches, with emphasis on what separates toy demos from useful generative chemistry.
 
 ## When to Use
@@ -33,6 +24,15 @@ Design, train, and rigorously evaluate models that generate novel molecules. Thi
 3. **Evaluation requires a reference.** "We generated 10,000 molecules" means nothing without comparing to training set overlap, property distributions, and structural diversity against a baseline.
 4. **Representation shapes the landscape.** SMILES is fragile (one wrong character → invalid molecule). SELFIES guarantees validity but has its own quirks (many-to-one mapping, dead regions). The choice is not neutral.
 5. **Latent space quality > sample quality.** A smooth, interpolatable latent space that responds to property optimization is more valuable than cherry-picked pretty molecules.
+
+### Tool selection guidance (post-Cycle5)
+
+Use the right generator for the question:
+- **String VAE / string models** (this skill): best for **fast iteration**, **motif ablation**, representation studies (SMILES vs SELFIES), and training-time diagnostics (KL collapse, AU, decoding constraints).
+- **Pocket-conditioned diffusion (DiffSBDD)**: best when **protein pocket geometry is the main conditioning signal** and you want structure-based design from the start.
+
+Recommended handoff when you use DiffSBDD:
+`DiffSBDD → RDKit sanitize/SMILES extraction → safety (denylist) → Vina docking → ProLIF interactions → QC prescreen (RDKit re-embed + MACE) → QE DFT`
 
 ## Phase 1: Representation & Data
 
@@ -565,4 +565,4 @@ Always produce this summary:
 - **Save models** to `research/ai4chem/models/<model-name>/`
 - **Save experiments** to `research/ai4chem/experiments/molgen/<date>-<model>.md`
 - **Cross-reference** with paper notes in `research/ai4chem/papers/molecule-generation/`
-- **Git commit**: `cd $OPENCLAW_WORKSPACE && git add -A && git commit -m "molgen: <description>"`
+- **Git commit**: `cd /home/node/.openclaw/workspace-chemicalexpert && git add -A && git commit -m "molgen: <description>"`

@@ -2,7 +2,7 @@
 name: chem-docking
 description: Perform molecular docking and virtual screening using AutoDock Vina. Covers receptor/ligand preparation, docking box setup, scoring interpretation, virtual screening pipelines, and integration with generative models as a binding affinity filter.
 homepage: https://github.com/ccsb-scripps/AutoDock-Vina
-metadata: { "openclaw": { "emoji": "🔬", "requires": { "bins": ["python3"], "python": ["vina", "meeko", "rdkit", "numpy", "pandas"] } } }
+metadata: { "openclaw": { "emoji": "🔬", "requires": { "bins": ["python3", "vina"], "python": ["rdkit", "numpy", "pandas"] } } }
 ---
 
 # Molecular Docking & Virtual Screening
@@ -310,6 +310,10 @@ Padding from reference ligand:
 ```
 
 ## Phase 4: Running Docking
+
+**Default workflow:** use **vina CLI** (robust, easy to time out, stable in batch mode).
+
+**Optional / advanced:** Python bindings (`vina` package). Use only if you need in-process control and you have the dependency installed.
 
 ### 4.1 Single Docking (Python API)
 

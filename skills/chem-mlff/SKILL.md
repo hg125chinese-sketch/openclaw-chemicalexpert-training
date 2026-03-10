@@ -415,6 +415,47 @@ def refine_docking_pose(smiles, docked_positions, model_type="mace-off", device=
 
 ### 5.2 Decision: MMFF vs MACE
 
+### 5.3 QC prescreen extensions (2026 update)
+
+MACE strain (single geometry relaxation energy) is a useful **fast reject** signal, but it is not sufficient by itself to predict DFT feasibility.
+
+Add these *additional prescreen signals* when the workflow is used as a QC gate:
+
+#### A) Multi-conformer RDKit embed retries (robustness)
+- Embed the same SMILES multiple times (different random seeds) with ETKDGv3.
+- Track MMFF convergence rate and basic geometry sanity.
+
+**Rationale:** if a molecule frequently fails embedding/MMFF convergence, downstream QC is high-risk.
+
+#### B) MACE optimizer diagnostics (not just |ΔE|)
+Record:
+- `mace_nsteps` (steps to converge)
+- `mace_max_force_eV_A` (max force at end)
+
+**Rationale:** two molecules can have similar strain but very different convergence behavior.
+
+#### C) Calibration log schema (accumulate PASS/FAIL labels)
+To make prescreen decisions auditable and improvable, maintain a simple log with QE outcomes:
+
+```json
+{
+  "mol_id": "cycle5_top5_hinge_1",
+  "smiles": "<SMILES>",
+  "strain_kcal": 23.88,
+  "mace_nsteps": 120,
+  "mace_max_force_eV_A": 0.008,
+  "dft_flag": "PASS"  
+}
+```
+
+Minimum fields:
+- `mol_id`, `smiles`
+- `strain_kcal`
+- `mace_nsteps`
+- `dft_flag` in {`PASS`, `OPT_FAIL`}
+
+This enables basic calibration plots and false-pass/false-reject tracking over time.
+
 ```
 When to use MACE over MMFF:
 ├── Conformer ranking where < 1 kcal/mol matters → MACE

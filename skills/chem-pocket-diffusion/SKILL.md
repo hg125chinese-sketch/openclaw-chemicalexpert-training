@@ -174,6 +174,17 @@ Empirical reference (for feasibility planning):
 
 ## Phase 3 — Post-processing (RDKit)
 
+### 3.0 Policy: DiffSBDD 3D is for design, not QC
+
+**DiffSBDD 3D coordinates are for molecular design only.** For QC handoff, always use **RDKit ETKDGv3 + MMFF re-embed** (`geometry_source='rdkit_embed'`).
+
+Why this is a hard rule (Cycle 5 evidence):
+- Using DiffSBDD-provided 3D geometry directly in MACE prescreen produced **strain ~450–630 kcal/mol**.
+- Those geometries are therefore **not suitable** as direct QC inputs.
+
+Operational implication:
+- You may keep the DiffSBDD SDF for docking/pose generation, but for **QE QC / DFT**, re-embed from SMILES.
+
 ### 3.1 RDKit sanitization
 
 Even with `--sanitize`, expect failures. A reasonable expectation for 3D generators is ~**80%** RDKit-valid molecules, but this is model/checkpoint dependent.
