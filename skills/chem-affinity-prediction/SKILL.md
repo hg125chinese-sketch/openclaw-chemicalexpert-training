@@ -5,96 +5,109 @@ homepage: https://github.com/jwohlwend/boltz
 metadata: { "openclaw": { "emoji": "🎯", "requires": { "bins": ["boltz"], "python": ["boltz", "torch", "pytorch_lightning", "rdkit"] } } }
 ---
 
-# Binding Affinity Prediction (Boltz-2) — Practical Playbook
+# chem-affinity-prediction — Boltz-2 (affinity) as an orthogonal signal
 
-This skill adds **protein-ligand binding affinity prediction** to the pipeline using Boltz-2, providing IC50 estimates and binder probability as orthogonal scoring signals alongside Vina docking and ProLIF interaction analysis.
+Docking is great for *poses* and *local interaction evidence* (hinge H-bond, key residues). But it’s also noisy and rigid.
 
-> DiffSBDD generates → safety screen → Vina docking → ProLIF interaction → **Boltz-2 affinity** → QE DFT
+Boltz-2 affinity gives you a **second, orthogonal ranking signal** on a shortlist (ideally **DFT PASS** molecules). The key is doing this **without destroying** the main chemistry environment.
 
-Written from hands-on deployment experience: environment isolation pitfalls, YAML format discovery, and real results on IPF/ALK5 candidates.
-
----
-
-## When to Use
-
-- You have DFT-validated candidates and want a second opinion on binding strength beyond Vina scores.
-- You want to rank compounds by predicted IC50 rather than docking score.
-- You need binder/decoy classification (hit discovery stage).
-- You want to compare candidates from different generation methods (e.g., DiffSBDD vs VAE).
-
-## When NOT to Use
-
-- You need binding free energy with kcal/mol precision (use FEP instead).
-- Your ligand has >50 heavy atoms (poorly represented in Boltz-2 training data).
-- You need protein-protein binding affinity (not yet supported by Boltz-2).
+This skill is written from hands-on workflow issues we actually hit:
+- boltz install/uninstall can silently break numpy/scipy/torch stacks
+- YAML formatting is surprisingly strict
+- Docker multiprocessing (`num_workers`) can hang
 
 ---
 
-## Core Philosophy
-
-1. **Boltz-2 is an orthogonal signal, not a replacement.** Use it alongside Vina and ProLIF, not instead of them. Boltz-2 ranking can disagree with Vina — this is informative, not a bug.
-2. **Environment isolation is mandatory.** Boltz-2 requires torch 2.10+ which is incompatible with our chem environment (torch 2.6). Never install Boltz in the chem conda env.
-3. **Two outputs for two use cases.** `affinity_probability_binary` for hit discovery (is it a binder?), `affinity_pred_value` for lead optimization (how strong?).
-
----
-
-## Phase 0 — Environment Setup (CRITICAL: Separate Conda Env)
-
-### 0.1 Why a Separate Environment
-
-Boltz-2 depends on torch 2.10+ and numpy <2.0. Installing it in the chem environment will:
-- Upgrade torch from 2.6 to 2.10, breaking RDKit (GLIBCXX version mismatch)
-- Downgrade numpy from 2.2 to 1.26, breaking scipy and other packages
-- Corrupt the entire chem pipeline
-
-**This was verified the hard way.** Do not repeat this mistake.
-
-### 0.2 Create Isolated Environment
+## Workspace variables (use these; do not hardcode)
 
 ```bash
-# Create a fresh conda env (one-time)
+# Workspace
+OPENCLAW_WORKSPACE="/home/node/.openclaw/workspace-chemicalexpert"
+
+# QMD
+QMD="/home/node/.openclaw/.npm-global/bin/qmd"
+
+# Main chemistry env (DO NOT install boltz here)
+CHEM_PY="/opt/conda/envs/chem/bin/python"
+
+# Boltz env (MUST be isolated)
+BOLTZ_ENV_BIN="$HOME/.conda/envs/boltz/bin"
+BOLTZ="$BOLTZ_ENV_BIN/boltz"
+BOLTZ_PY="$BOLTZ_ENV_BIN/python"
+
+# Isolation (mandatory)
+export PYTHONNOUSERSITE=1
+```
+
+---
+
+## When to use (be specific)
+
+Use Boltz-2 affinity when:
+
+1) You have **high-confidence candidates** already:
+- **DFT QC PASS** (preferred), or at least
+- Vina Top5/Top10 with **hinge H-bond = True** (ProLIF-validated)
+
+2) You need to resolve ranking ambiguity:
+- Vina suggests A > B, but interaction evidence is mixed, **or**
+- you suspect docking score is overfitting pose artifacts.
+
+3) You want a hit-discovery style signal:
+- use `affinity_probability_binary` as binder vs decoy probability
+  - **suggested triage**: >0.5 “likely binder”, <0.3 “likely weak/decoy” (heuristic)
+
+Do NOT use Boltz-2 when:
+- You need kcal/mol-accurate ΔG (use FEP)
+- Ligands are far outside drug-like space (very large, unusual chemistry)
+
+---
+
+## Core rules (non-negotiable)
+
+1) **Environment isolation is mandatory.**
+   - Boltz-2 depends on **torch 2.10+** and **numpy < 2.0**.
+   - Installing it into the main chem env can break RDKit/scipy/torch.
+
+2) **Always run with `PYTHONNOUSERSITE=1`.**
+   - Prevents accidental imports from `~/.local/...` that can poison the boltz env.
+
+3) **Expect disagreement with Vina/ProLIF.**
+   - Treat disagreement as information.
+   - Use a **panel** strategy (pick a small set that balances signals) rather than trusting a single metric.
+
+---
+
+## Phase 0 — Environment setup (isolated boltz conda env)
+
+### 0.1 Create env
+
+```bash
 /opt/conda/bin/conda create -n boltz python=3.11 -y
 
 # Install Boltz with CUDA support
-PYTHONNOUSERSITE=1 /home/node/.conda/envs/boltz/bin/pip install "boltz[cuda]"
+PYTHONNOUSERSITE=1 "$HOME/.conda/envs/boltz/bin/pip" install "boltz[cuda]"
 ```
 
-Note: The environment may be created at `/home/node/.conda/envs/boltz/` if `/opt/conda/envs/` is not writable.
+Notes:
+- The env may live under `$HOME/.conda/envs/boltz/`.
+- Do **not** mix this with `/opt/conda/envs/chem`.
 
-### 0.3 PYTHONNOUSERSITE=1 is Required
-
-The boltz environment shares Python 3.11 with chem. Without `PYTHONNOUSERSITE=1`, it will import packages from `~/.local/lib/python3.11/site-packages/` (chem's user packages), causing version conflicts.
-
-**Every boltz invocation must use:**
+### 0.2 Sanity check
 
 ```bash
-PYTHONNOUSERSITE=1 /home/node/.conda/envs/boltz/bin/boltz predict ...
+PYTHONNOUSERSITE=1 "$HOME/.conda/envs/boltz/bin/boltz" predict --help
 ```
 
-### 0.4 Sanity Check
+### 0.3 First-run downloads (~2GB)
 
-```bash
-PYTHONNOUSERSITE=1 /home/node/.conda/envs/boltz/bin/boltz predict --help
-```
-
-Should print usage without import errors.
-
-### 0.5 First Run Downloads (~2GB)
-
-On first run, Boltz-2 downloads:
-- CCD data (`~/.boltz/mols.tar`)
-- Structure model weights (`~/.boltz/boltz2.ckpt`)
-- Affinity model weights (`~/.boltz/boltz2_aff.ckpt`)
-
-This is a one-time cost.
+Boltz-2 may download CCD + weights on first run (one-time cost).
 
 ---
 
-## Phase 1 — Input Preparation (YAML Format)
+## Phase 1 — YAML input preparation (the common failure point)
 
-### 1.1 YAML Structure
-
-Boltz-2 takes a YAML file per prediction. Minimum required for affinity:
+Boltz-2 uses one YAML per prediction. Minimum for affinity:
 
 ```yaml
 version: 1
@@ -110,233 +123,144 @@ properties:
       binder: B
 ```
 
-**Critical details:**
-- Entity type for small molecules is `ligand`, NOT `smiles`
-- The `properties` section with `affinity.binder` is **required** for affinity prediction — without it, only structure prediction runs
-- `binder` value must match the ligand's `id`
-- SMILES must be quoted to avoid YAML parsing issues with special characters
+Pitfalls (real):
+- small molecule entity type is `ligand` (not `smiles`)
+- `properties.affinity.binder` is **required** for affinity; otherwise you only run structure
+- `binder` must match ligand id (here `B`)
+- **quote SMILES** (YAML parsing breaks on special characters)
 
-### 1.2 Protein Sequence
-
-Use the full kinase domain sequence. Truncated or incomplete sequences produce low confidence scores (we observed confidence ~0.33 with a partial ALK5 sequence). For ALK5/TGFBR1, use the sequence from UniProt P36897.
-
-### 1.3 Batch Preparation
-
-For multiple ligands, create one YAML per ligand in a directory:
+### 1.1 Batch writer (script-like example)
 
 ```python
-import os
+#!/opt/conda/envs/chem/bin/python
+"""Write one Boltz YAML per ligand.
 
-def write_boltz_yamls(protein_seq, smiles_dict, output_dir):
-    """Write one YAML per ligand for batch Boltz-2 prediction.
-    
-    smiles_dict: {mol_id: smiles_string}
-    """
-    os.makedirs(output_dir, exist_ok=True)
-    for mol_id, smi in smiles_dict.items():
-        yaml_content = f"""version: 1
+Run this in the chem env (fast IO), then run boltz in the boltz env.
+"""
+
+from pathlib import Path
+
+
+def write_boltz_yamls(*, protein_seq: str, smiles_by_id: dict[str, str], out_dir: str) -> None:
+    out = Path(out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+
+    for mol_id, smi in smiles_by_id.items():
+        yml = f"""version: 1
 sequences:
   - protein:
       id: A
       sequence: {protein_seq}
   - ligand:
       id: B
-      smiles: "{smi}"
+      smiles: \"{smi}\"
 properties:
   - affinity:
       binder: B
 """
-        with open(f"{output_dir}/{mol_id}.yaml", "w") as f:
-            f.write(yaml_content)
+        (out / f"{mol_id}.yaml").write_text(yml, encoding="utf-8")
 ```
 
-Then pass the directory to `boltz predict`.
+Protein sequence note:
+- Use the full kinase domain sequence (e.g., ALK5/TGFBR1 from UniProt P36897). Partial sequences reduced confidence in practice.
 
 ---
 
-## Phase 2 — Running Predictions
+## Phase 2 — Run Boltz predictions (single + batch)
 
-### 2.1 Single Prediction
+### 2.1 Single
 
 ```bash
-PYTHONNOUSERSITE=1 /home/node/.conda/envs/boltz/bin/boltz predict \
+PYTHONNOUSERSITE=1 "$HOME/.conda/envs/boltz/bin/boltz" predict \
   input.yaml \
-  --out_dir /path/to/output \
+  --out_dir <OUT_DIR> \
   --use_msa_server \
   --num_workers 0
 ```
 
-### 2.2 Batch Prediction
+### 2.2 Batch
 
 ```bash
-PYTHONNOUSERSITE=1 /home/node/.conda/envs/boltz/bin/boltz predict \
-  /path/to/yaml_dir/ \
-  --out_dir /path/to/output \
+PYTHONNOUSERSITE=1 "$HOME/.conda/envs/boltz/bin/boltz" predict \
+  <YAML_DIR>/ \
+  --out_dir <OUT_DIR> \
   --use_msa_server \
-  --num_workers 0
+  --num_workers 0 \
+  --override
 ```
 
-**Important flags:**
-- `--use_msa_server`: Required for protein inputs (generates MSA via MMseqs2 server). Without this, prediction fails with "Missing MSA" error.
-- `--num_workers 0`: Prevents shared memory allocation failures in Docker containers. Without this, batch jobs may hang at 25%.
-- `--override`: Re-run predictions that already exist in the output directory.
+Flags that matter:
+- `--use_msa_server`: required for protein inputs (otherwise “Missing MSA”)
+- `--num_workers 0`: avoids Docker shared-memory multiprocessing issues (we saw hangs around ~25%)
+- `--override`: rerun existing outputs
 
-### 2.3 Walltime Benchmark
+### 2.3 Walltime benchmark (reference)
 
 On RTX 4080 Laptop (12GB VRAM):
-- Single prediction (structure + affinity): ~35 seconds (MSA ~20s + structure ~12s + affinity ~3s)
-- Batch of 4: ~4 minutes total (MSA cached after first protein)
-
-### 2.4 Output Structure
-
-```
-out_dir/
-└── boltz_results_<dir_name>/
-    └── predictions/
-        └── <mol_id>/
-            ├── <mol_id>_model_0.cif          # 3D structure
-            ├── confidence_<mol_id>_model_0.json  # Structure confidence
-            └── affinity_<mol_id>.json         # Binding affinity
-```
+- single (structure + affinity): ~35s (MSA ~20s + structure ~12s + affinity ~3s)
+- batch of 4: ~4 min total (MSA cached after first protein)
 
 ---
 
-## Phase 3 — Interpreting Results
+## Phase 3 — Outputs and interpretation
 
-### 3.1 Affinity Output Fields
+Boltz output layout (typical):
+
+```
+<OUT_DIR>/
+└── boltz_results_<name>/
+    └── predictions/
+        └── <mol_id>/
+            ├── <mol_id>_model_0.cif
+            ├── confidence_<mol_id>_model_0.json
+            └── affinity_<mol_id>.json
+```
+
+Affinity JSON example:
 
 ```json
 {
-    "affinity_pred_value": -0.62,
-    "affinity_probability_binary": 0.43,
-    "affinity_pred_value1": -0.93,
-    "affinity_probability_binary1": 0.52,
-    "affinity_pred_value2": -0.32,
-    "affinity_probability_binary2": 0.35
+  "affinity_pred_value": -0.62,
+  "affinity_probability_binary": 0.43,
+  "affinity_pred_value1": -0.93,
+  "affinity_probability_binary1": 0.52,
+  "affinity_pred_value2": -0.32,
+  "affinity_probability_binary2": 0.35
 }
 ```
 
-- **affinity_pred_value**: Mean predicted log10(IC50) in µM. More negative = stronger binding.
-  - Convert to IC50: `IC50_uM = 10^(affinity_pred_value)`
-  - Example: -0.62 → IC50 ≈ 0.24 µM (submicromolar)
-- **affinity_probability_binary**: Mean probability the ligand is a binder (0-1).
-  - Use for hit discovery / binder vs decoy classification.
-- **Numbered variants** (value1/2, probability1/2): Individual diffusion samples. Spread indicates prediction uncertainty.
+Interpretation:
+- `affinity_pred_value`: mean predicted log10(IC50) in µM (more negative = stronger)
+  - IC50 (µM) = 10^(affinity_pred_value)
+  - example: -0.62 → ~0.24 µM
+- `affinity_probability_binary`: mean binder probability (0–1)
+- numbered variants indicate uncertainty/spread
 
-### 3.2 Use Cases
-
-| Stage | Use this field | Threshold suggestion |
-|-------|---------------|---------------------|
-| Hit discovery | affinity_probability_binary | > 0.5 = likely binder |
-| Lead optimization | affinity_pred_value | More negative = better; compare relative ranking |
-
-### 3.3 Confidence Context
-
-Structure confidence (from confidence JSON) affects affinity reliability:
-- **confidence_score > 0.5**: Affinity prediction is more trustworthy
-- **confidence_score < 0.3**: Take affinity with a grain of salt — structure may be unreliable
+Confidence context:
+- if structure confidence is low (e.g., <0.3), treat affinity as low-trust.
 
 ---
 
-## Phase 4 — Integration with Existing Pipeline
+## Phase 4 — Integration with Vina/ProLIF (panel, not single-metric)
 
-### 4.1 Boltz-2 as Orthogonal Signal
+### 4.1 Why ranks can disagree
 
-Boltz-2 affinity should be used **alongside** Vina and ProLIF, not as a replacement:
+Vina approximates scoring from a rigid docking pose; Boltz-2 is a learned predictor on co-folded structure + patterns.
+Disagreement is expected.
 
-```
-DiffSBDD → safety → Vina docking → ProLIF interaction → Boltz-2 affinity → QE DFT
-```
-
-### 4.2 Why Rankings Disagree
-
-In our IPF/ALK5 validation, Boltz-2 and Vina produced different rankings:
+Observed example (IPF/ALK5 validation):
 
 | Molecule | Vina Score | Boltz-2 IC50 |
-|----------|-----------|--------------|
-| hinge_1  | -10.01 (best Vina) | 0.47 µM (worst Boltz) |
-| hinge_3  | -8.94 (worst Vina) | 0.23 µM (best Boltz) |
+|---|---:|---:|
+| hinge_1 | -10.01 (best Vina) | 0.47 µM (worst Boltz) |
+| hinge_3 | -8.94 (worst Vina) | 0.23 µM (best Boltz) |
 
-This is expected — Vina scores approximate binding free energy from a rigid docking pose, while Boltz-2 predicts IC50 from a co-folded structure with learned affinity patterns. Disagreement is diagnostic information, not error.
+### 4.2 Practical decision rule: panel selection
 
-### 4.3 Multi-Score Integration
+When the shortlist is small (e.g., DFT PASS set):
+- pick a **panel** that balances:
+  - docking evidence (hinge H-bond + reasonable key-residue coverage)
+  - Vina score
+  - Boltz-2 affinity value + binder_prob
 
-When combining Vina, ProLIF, and Boltz-2, use a panel approach:
-
-1. **Hard gates**: hinge H-bond (ProLIF) = required, MACE prescreen = required
-2. **Ranking signals**: Vina score, Boltz-2 affinity_pred_value, Boltz-2 binder probability
-3. **Selection**: Prefer candidates that rank well on at least 2 of 3 signals
-
-Do NOT combine into a single composite score without validation — the signals have different scales and calibrations.
-
----
-
-## Phase 5 — Parsing Results Programmatically
-
-```python
-import json
-import os
-import glob
-
-def parse_boltz_affinity(results_dir):
-    """Parse all affinity results from a Boltz-2 batch run."""
-    results = []
-    pattern = os.path.join(results_dir, "predictions/*/affinity_*.json")
-    for path in sorted(glob.glob(pattern)):
-        mol_id = os.path.basename(os.path.dirname(path))
-        with open(path) as f:
-            data = json.load(f)
-        ic50_um = 10 ** data["affinity_pred_value"]
-        results.append({
-            "mol_id": mol_id,
-            "affinity_log_ic50": data["affinity_pred_value"],
-            "ic50_uM": round(ic50_um, 3),
-            "binder_prob": data["affinity_probability_binary"],
-        })
-    # Sort by affinity (most negative = strongest)
-    results.sort(key=lambda x: x["affinity_log_ic50"])
-    return results
-```
-
----
-
-## Failure Modes & Workarounds
-
-### A) Import errors / GLIBCXX mismatch
-- **Symptom**: `ImportError: libstdc++.so.6: version GLIBCXX_3.4.31 not found`
-- **Cause**: Boltz was installed in the chem conda env, upgrading torch
-- **Fix**: Uninstall boltz from chem env, restore torch 2.6, use separate boltz env
-
-### B) "Invalid entity type: smiles"
-- **Symptom**: YAML parsing error
-- **Cause**: Using `smiles:` instead of `ligand:` as entity type
-- **Fix**: Use `ligand:` with `smiles:` as a sub-field
-
-### C) "Missing MSA's in input"
-- **Symptom**: RuntimeError about missing MSA
-- **Fix**: Add `--use_msa_server` flag
-
-### D) No affinity JSON in output
-- **Symptom**: Structure prediction runs but no affinity_*.json
-- **Cause**: Missing `properties: - affinity: binder: <id>` in YAML
-- **Fix**: Add the properties section to YAML
-
-### E) Batch hangs at 25%
-- **Symptom**: DataLoader stops progressing, shared memory errors in log
-- **Cause**: Docker container shared memory limit
-- **Fix**: Use `--num_workers 0`
-
-### F) Low confidence scores (<0.3)
-- **Symptom**: Poor structure confidence
-- **Possible causes**: Incomplete protein sequence, unusual ligand chemistry
-- **Workaround**: Use full-length domain sequence; check if ligand has >50 heavy atoms
-
----
-
-## Deliverables
-
-Minimum artifacts per Boltz-2 run:
-- Affinity results table: mol_id, log10(IC50), IC50_µM, binder_probability
-- Comparison with Vina ranking (highlight disagreements)
-- Structure confidence scores
-- Integration recommendation (which candidates rank well on multiple signals)
+Do not “optimize” only one metric unless you have real experimental feedback.
