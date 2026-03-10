@@ -720,7 +720,7 @@ Scope:
 gnina-run --score_only \
   -r receptor.pdbqt \
   -l docked_poses.sdf \
-  --cnn_scoring
+  --cnn_scoring rescore
 ```
 
 #### Outputs

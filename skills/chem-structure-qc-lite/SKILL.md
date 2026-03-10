@@ -186,6 +186,26 @@ This mirrors the Cycle 5 fix: DiffSBDD 3D was not QC-grade; RDKit re-embed produ
 
 ---
 
+## Failure modes (known pitfalls from Cycle5 PoseBusters validation)
+
+1) **`bust` not on PATH**
+- In this environment, the CLI was installed at:
+  - `/home/node/.local/bin/bust`
+- If `bust` is not on PATH, call it by **absolute path**.
+
+2) **No single `pb_valid` column in `--outfmt long` output**
+- `bust --outfmt long` produced one boolean column per check (e.g., `sanitization`, `bond_lengths`, `bond_angles`, `internal_steric_clash`, ...).
+- Compute overall pass as row-wise AND across the check columns:
+  - `pb_valid = df[check_cols].all(axis=1)`
+
+3) **PoseBusters Python API requires absolute paths**
+- Relative paths can error with `File not found`.
+- Use `Path(...).resolve()` or pass absolute paths.
+
+4) **Energy ratio / conformer generation failure**
+- Some molecules may fail energy-ratio-related checks because conformer generation fails.
+- Treat this as a **partial failure reason**; do not assume other checks are invalid.
+
 ## Reporting checklist
 
 - [ ] Report both checkpoints (A and/or B) and which one was used.
