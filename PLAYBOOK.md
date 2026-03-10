@@ -51,6 +51,7 @@ Principle: when the user says "use skill X", route to the corresponding **QMD co
 | 16 | **chem-docking-interactions** | Docking pose interaction fingerprints, hinge H-bond validation, interaction rerank | Hinge yes/no + details, key residue coverage, rerank table |
 | 17 | **chem-scaffold-conditioned-gen** | Scaffold/fragment-conditioned generation (data audit, latent conditioning, constrained sampling) | Conditioning hit rate, KPI gate, generation set & diagnosis report |
 | 18 | **chem-pocket-diffusion** | Pocket-conditioned 3D ligand generation (DiffSBDD); substructure inpainting to enforce fragments | generated.sdf + SMILES extraction, validity gate, downstream safety→dock→ProLIF Top5 |
+| 19 | **chem-affinity-prediction** | Affinity prediction as an orthogonal signal on **DFT PASS** molecules (Boltz-2); helps resolve ranking disagreements between docking and ML signals | affinity table (affinity + binder_prob), panel recommendation, disagreement analysis |
 
 ## Standard QMD workflow (copyable)
 
@@ -272,6 +273,16 @@ When generating 3D ligands conditioned on a protein pocket (DiffSBDD focus):
    - Hard gate: validity >= 70% (60–70% warning; <60% fail)
    - Integrate into standard pipeline: safety screen → Vina docking → ProLIF hinge H-bond KPI + rerank
    - Substructure inpainting exists, but treat as untrusted until validated end-to-end
+
+## Skill: chem-affinity-prediction (Boltz-2 affinity as an orthogonal signal)
+When ranking **DFT PASS** molecules, add Boltz-2 affinity prediction as an *orthogonal* signal:
+
+1) Use after QC PASS (DFT), not before.
+2) Run Boltz-2 in a **separate boltz conda environment**, and enforce isolation:
+   - set `PYTHONNOUSERSITE=1`
+   - do not mix boltz env with the main `/opt/conda/envs/chem` environment
+3) Expect **disagreements** between Vina/ProLIF and Boltz-2 ranks.
+   - Use a **panel** approach: select a small set that balances docking evidence (pose + hinge H-bond) and affinity prediction, instead of trusting a single metric.
 
 ## Browser automation
 
