@@ -27,7 +27,7 @@ QMD=/home/node/.openclaw/.npm-global/bin/qmd
 - **chem-literature** → chemistry/AI4Chem paper search + deep reads (arXiv / Semantic Scholar / PubChem)
 - **agent-browser** → browser automation / scraping / form filling / UI regression
 
-## Skill routing table (skills 1–20)
+## Skill routing table (skills 1–21)
 
 Principle: when the user says "use skill X", route to the corresponding **QMD collection** and follow its `SKILL.md`.
 
@@ -53,6 +53,7 @@ Principle: when the user says "use skill X", route to the corresponding **QMD co
 | 18 | **chem-pocket-diffusion** | Pocket-conditioned 3D ligand generation (DiffSBDD); substructure inpainting to enforce fragments | generated.sdf + SMILES extraction, validity gate, downstream safety→dock→ProLIF Top5 |
 | 19 | **chem-affinity-prediction** | Affinity prediction as an orthogonal signal on **DFT PASS** molecules (Boltz-2); helps resolve ranking disagreements between docking and ML signals | affinity table (affinity + binder_prob), panel recommendation, disagreement analysis |
 | 20 | **chem-panel-selection** | End-of-cycle **panel selection** from a shortlist (3–10) under conflicting signals; use a **2x2 Vina vs Boltz-2 disagreement grid**; apply **hard gates before ranking signals** | panel selection report section, 2x2 grid, auditable per-molecule rationale, anti-overfitting rules |
+| 21 | **chem-structure-qc-lite** | Lightweight geometry/pose QC with **PoseBusters** at two checkpoints: post-generation (after safety, before docking) and post-docking (before ProLIF); `pb_valid` is a **hard gate**; optional recovery via RDKit re-embed + MMFF | qc.tsv (PoseBusters), per-mol pb_valid + failure reasons, recovered vs rejected summary |
 
 ## Standard QMD workflow (copyable)
 
@@ -296,6 +297,22 @@ At end of each DMTA cycle when selecting candidates for next stage:
    - Select panel (not single winner): 1–2 consensus + 1 docking-favored + 1 ML-favored
    - Record auditable rationale for each selection
    - Do NOT optimize single metric without experimental feedback
+
+## Skill: chem-structure-qc-lite (PoseBusters-based geometry/pose QC)
+Use this to catch AI-generated 3D structures / docking poses that look OK by docking score but are geometrically invalid (stereochemistry, bond lengths, clashes).
+
+Two checkpoints:
+1) **Post-generation**: after safety screen, before docking
+2) **Post-docking**: after docking, before ProLIF interactions
+
+1) Consult:
+   - /home/node/.openclaw/.npm-global/bin/qmd search "<query>" -c chem-structure-qc-lite -n 10
+   - /home/node/.openclaw/.npm-global/bin/qmd get qmd://chem-structure-qc-lite/SKILL.md -l 260
+2) Key rules:
+   - PoseBusters `pb_valid` is a **hard gate** (required to pass)
+   - Run PoseBusters at both checkpoints (generated SDF, and docked poses)
+   - Recovery path (optional): RDKit re-embed (ETKDGv3) + MMFF minimize → re-test with PoseBusters
+   - Report standardized outputs: `mol_id, pb_valid, n_warnings, failure_reasons` (+ `recovered`)
 
 ## Browser automation
 
