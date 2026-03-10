@@ -285,6 +285,18 @@ When ranking **DFT PASS** molecules, add Boltz-2 affinity prediction as an *orth
 3) Expect **disagreements** between Vina/ProLIF and Boltz-2 ranks.
    - Use a **panel** approach: select a small set that balances docking evidence (pose + hinge H-bond) and affinity prediction, instead of trusting a single metric.
 
+## Skill: chem-panel-selection (conflict-aware multi-signal panel selection)
+At end of each DMTA cycle when selecting candidates for next stage:
+1) Consult:
+   - /home/node/.openclaw/.npm-global/bin/qmd search "<query>" -c chem-panel-selection -n 10
+   - /home/node/.openclaw/.npm-global/bin/qmd get qmd://chem-panel-selection/SKILL.md -l 260
+2) Key rules:
+   - Apply hard gates first (hinge H-bond, DFT PASS, safety denylist)
+   - Build 2x2 disagreement grid (Vina vs Boltz-2 affinity)
+   - Select panel (not single winner): 1–2 consensus + 1 docking-favored + 1 ML-favored
+   - Record auditable rationale for each selection
+   - Do NOT optimize single metric without experimental feedback
+
 ## Browser automation
 
 Prefer `agent-browser` (CLI) for web automation:
