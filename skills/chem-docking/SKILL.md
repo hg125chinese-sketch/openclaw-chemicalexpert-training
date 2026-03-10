@@ -700,6 +700,52 @@ cycle5_hinge_1,5,4,0.8,True
 - If your pipeline outputs SDF poses with consistent atom order, you can compute RMSD by RDKit alignment (e.g., `rdMolAlign.AlignMol`).
 - If you only have PDBQT, convert to SDF (or RDKit Mol) in a way that preserves atom correspondence.
 
+### 4.5 GNINA CNN rescoring (ranking-only, rescore-only mode)
+
+GNINA provides **CNN-based rescoring** of existing poses. Use it as an *orthogonal ranking signal* on top of Vina poses.
+
+Scope:
+- **Not a hard gate**.
+- Treat as a third ranking signal alongside Vina and (optionally) Boltz‑2, to support **panel selection** under disagreements.
+
+#### Rescore-only workflow (use Vina poses)
+
+1) Run Vina docking as usual and keep the docked poses (e.g., SDF).
+2) Run GNINA in **score-only** mode to rescore those poses:
+
+```bash
+# IMPORTANT: use the gnina-run wrapper (not the raw gnina binary)
+# gnina-run sets LD_LIBRARY_PATH correctly for this installation.
+
+gnina-run --score_only \
+  -r receptor.pdbqt \
+  -l docked_poses.sdf \
+  --cnn_scoring
+```
+
+#### Outputs
+
+Record per-pose fields as ranking signals:
+- `gnina_score` (CNNscore)
+- `CNNaffinity`
+
+These can be merged into your docking results table (one row per pose) for downstream ranking and **chem-panel-selection**.
+
+#### Notes / constraints
+
+- Always call **`gnina-run`** (wrapper), not `gnina` directly.
+- The GNINA binary is large (~2 GB) and installed at:
+  - `/home/node/.local/bin/gnina` (invoked via `/home/node/.local/bin/gnina-run`)
+- Requires **CUDA / GPU** for practical throughput on rescoring.
+
+#### Integration with panel selection
+
+- Vina vs Boltz‑2 is a useful 2x2 disagreement view.
+- Adding GNINA makes it **multi-dimensional**: do not invent a single magic weighted score.
+- Use GNINA to:
+  - break ties within a quadrant, or
+  - select a “third-signal champion” when Vina/Boltz disagree.
+
 ## Phase 5: Score Interpretation & Analysis
 
 ### 5.1 Score Guidelines
