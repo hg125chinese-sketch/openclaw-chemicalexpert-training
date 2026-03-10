@@ -27,7 +27,7 @@ QMD=/home/node/.openclaw/.npm-global/bin/qmd
 - **chem-literature** → chemistry/AI4Chem paper search + deep reads (arXiv / Semantic Scholar / PubChem)
 - **agent-browser** → browser automation / scraping / form filling / UI regression
 
-## Skill routing table (skills 1–17)
+## Skill routing table (skills 1–20)
 
 Principle: when the user says "use skill X", route to the corresponding **QMD collection** and follow its `SKILL.md`.
 
@@ -52,6 +52,7 @@ Principle: when the user says "use skill X", route to the corresponding **QMD co
 | 17 | **chem-scaffold-conditioned-gen** | Scaffold/fragment-conditioned generation (data audit, latent conditioning, constrained sampling) | Conditioning hit rate, KPI gate, generation set & diagnosis report |
 | 18 | **chem-pocket-diffusion** | Pocket-conditioned 3D ligand generation (DiffSBDD); substructure inpainting to enforce fragments | generated.sdf + SMILES extraction, validity gate, downstream safety→dock→ProLIF Top5 |
 | 19 | **chem-affinity-prediction** | Affinity prediction as an orthogonal signal on **DFT PASS** molecules (Boltz-2); helps resolve ranking disagreements between docking and ML signals | affinity table (affinity + binder_prob), panel recommendation, disagreement analysis |
+| 20 | **chem-panel-selection** | End-of-cycle **panel selection** from a shortlist (3–10) under conflicting signals; use a **2x2 Vina vs Boltz-2 disagreement grid**; apply **hard gates before ranking signals** | panel selection report section, 2x2 grid, auditable per-molecule rationale, anti-overfitting rules |
 
 ## Standard QMD workflow (copyable)
 
