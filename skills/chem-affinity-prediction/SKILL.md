@@ -241,6 +241,25 @@ Confidence context:
 
 ---
 
+## ALK5/TGFBR1 calibration note (2026-03)
+
+We ran a small **ALK5 (TGFBR1) active-vs-decoy calibration** (hardcoded set; 9/10 molecules succeeded; *Vactosertib SMILES parse failed and was skipped*).
+
+Key results (ALK5-specific):
+- `binder_prob` showed **weak separation** in the correct direction:
+  - actives mean ≈ **0.268** vs decoys mean ≈ **0.100**
+- `affinity_pred_value` / predicted IC50 had **poor separation**:
+  - both actives and decoys clustered at ~µM scale
+- Example miscalibration:
+  - Galunisertib (known <100 nM) was predicted ~**8.8 µM** (≈2 orders of magnitude off)
+
+Operational policy for ALK5:
+- Treat **`binder_prob` as a weak orthogonal signal** (panel-selection tiebreaker).
+- Do **not** trust `affinity_pred_value` absolute values; use only **relative trends** within a shortlist.
+- This matches the broader 2026 external assessment: Boltz-2 correlation is **weak to moderate** and target-dependent.
+
+---
+
 ## Phase 4 — Integration with Vina/ProLIF (panel, not single-metric)
 
 ### 4.1 Why ranks can disagree
