@@ -324,6 +324,127 @@ def batch_interaction_fingerprint(protein_pdb, docked_sdf,
     return result
 ```
 
+### 3.3 PLIF recovery (quantitative pose quality vs co-crystal reference)
+
+Binary hinge H-bond (True/False) is a **hard gate** for kinase Type I binding, but it does not tell you *how much of the known interaction pattern you recovered*.
+
+**PLIF recovery** quantifies how well a candidate pose recovers the **reference interaction set** from the co-crystal ligand.
+
+This is recommended as an additional quantitative pose-quality metric (see e.g. PMC12090448).
+
+#### Definition
+
+1) Build a **reference interaction set** from the co-crystal complex (1VJY ligand) using ProLIF.
+2) For each candidate docking pose, build its interaction set using ProLIF.
+3) Compute recovery:
+
+- `overall_recovery = |I_candidate ∩ I_ref| / |I_ref|`
+- `hinge_recovery = |I_candidate_hinge ∩ I_ref_hinge| / |I_ref_hinge|`
+
+Where an "interaction" is a ProLIF fingerprint column (residue + interaction type).
+
+#### Practical rules
+
+- **Hinge H-bond yes/no remains a hard gate.**
+- `overall_recovery` and `hinge_recovery` are **ranking signals** (continuous; higher is better).
+- Use recovery to break ties and to prefer poses that look more like the known binding mode.
+
+#### Minimal implementation (ProLIF)
+
+```python
+#!/opt/conda/envs/chem/bin/python
+import pandas as pd
+import prolif as plf
+import MDAnalysis as mda
+
+
+def _ref_interaction_set(fp_df: pd.DataFrame) -> set[str]:
+    """Return set of interaction column labels present in the reference (True)."""
+    # fp_df has one row for the reference ligand pose
+    row = fp_df.iloc[0]
+    return {str(c) for c, v in row.items() if bool(v)}
+
+
+def _interaction_set_for_pose(row: pd.Series) -> set[str]:
+    return {str(c) for c, v in row.items() if bool(v)}
+
+
+def _hinge_filter(cols: set[str], hinge_resnrs=(280, 283)) -> set[str]:
+    # Column string typically contains residue info; do substring match for robustness.
+    keep = set()
+    for c in cols:
+        s = str(c)
+        if any(f"{r}" in s for r in hinge_resnrs):
+            keep.add(c)
+    return keep
+
+
+def compute_plif_recovery(*, protein_pdb: str, ref_ligand_sdf: str, docked_sdf: str, mol_id_col: str = "mol_id") -> pd.DataFrame:
+    """Compute PLIF recovery vs reference for each docking pose.
+
+    Returns one row per pose with:
+      - mol_id (if present in SDF properties; else index)
+      - overall_recovery, hinge_recovery
+      - recovered_contacts, missing_contacts (lists of column labels)
+    """
+    prot = plf.Molecule.from_mda(mda.Universe(protein_pdb))
+
+    # Reference
+    ref_suppl = plf.sdf_supplier(ref_ligand_sdf)
+    fp_ref = plf.Fingerprint()
+    fp_ref.run_from_iterable(ref_suppl, prot)
+    df_ref = fp_ref.to_dataframe()
+    I_ref = _ref_interaction_set(df_ref)
+    I_ref_h = _hinge_filter(I_ref)
+
+    # Candidates
+    lig_suppl = plf.sdf_supplier(docked_sdf)
+    fp = plf.Fingerprint()
+    fp.run_from_iterable(lig_suppl, prot)
+    df = fp.to_dataframe()
+
+    rows = []
+    for i in range(len(df)):
+        row = df.iloc[i]
+        I = _interaction_set_for_pose(row)
+        inter = I & I_ref
+        miss = I_ref - I
+
+        # hinge subset
+        I_h = _hinge_filter(I)
+        inter_h = I_h & I_ref_h
+        miss_h = I_ref_h - I_h
+
+        overall = (len(inter) / len(I_ref)) if I_ref else 0.0
+        hinge = (len(inter_h) / len(I_ref_h)) if I_ref_h else 0.0
+
+        rows.append({
+            "pose_index": i,
+            "overall_recovery": overall,
+            "hinge_recovery": hinge,
+            "recovered_contacts": sorted(inter),
+            "missing_contacts": sorted(miss),
+            "recovered_hinge_contacts": sorted(inter_h),
+            "missing_hinge_contacts": sorted(miss_h),
+        })
+
+    return pd.DataFrame(rows)
+```
+
+#### Standardized output per molecule (recommended)
+
+For each **molecule** (not each pose), take the best pose by your primary criterion (e.g., has_hinge_hbond=True, then highest overall_recovery):
+
+- `mol_id`
+- `hinge_hbond` (bool; hard gate)
+- `interaction_recovery` (0–1; use `overall_recovery`)
+- `hinge_recovery` (0–1)
+- `recovered_contacts` (list)
+- `missing_contacts` (list)
+
+Integration:
+- Feed `interaction_recovery` into **chem-panel-selection** as a ranking signal.
+
 ## Phase 4: Interaction-Based Reranking
 
 ### 4.1 Score Candidates by Interaction Quality
