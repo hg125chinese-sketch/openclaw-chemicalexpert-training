@@ -4,13 +4,14 @@ How I trained an LLM agent to autonomously run drug discovery workflows — and 
 
 ## TL;DR
 
-I trained an AI agent ("ChemicalExpert") with **18 specialized chemistry skills** using a systematic 7-step methodology. The agent learned to autonomously plan and execute Design-Make-Test-Analyze (DMTA) cycles for drug discovery. Over **5 iterative cycles** on the same target, the agent:
+I trained an AI agent ("ChemicalExpert") with **21 specialized chemistry skills** using a systematic 7-step methodology. The agent learned to autonomously plan and execute Design-Make-Test-Analyze (DMTA) cycles for drug discovery. Over **6 iterative cycles** on the same target, the agent:
 
 - Diagnosed its own output quality problems (VAE KL collapse, missing hinge binders)
 - Ran 6 controlled experiments to fix molecular generation, documenting every failure
 - Improved Top5 candidate quality from **20% to 80%** passing the critical hinge H-bond gate
 - Discovered that SELFIES GRU VAE decoders structurally ignore conditioning signals — a finding validated across 6 independent experiments
-- Upgraded to pocket-conditioned 3D diffusion (DiffSBDD), achieving **100% DFT pass rate** and the best binding score across all cycles
+- Upgraded to pocket-conditioned 3D diffusion (DiffSBDD), achieving **100% DFT pass rate** across two consecutive cycles
+- Built a full multi-signal pipeline with PoseBusters geometry QC, GNINA CNN rescoring, multi-seed pose robustness, Boltz-2 affinity prediction, and conflict-aware panel selection
 
 ## The Problem
 
@@ -43,7 +44,7 @@ Through trial and error training two agents (a debugging agent and ChemicalExper
 
 **Step 7: Self-Review** — Ask the agent to write its own skill review. Compare against your observations. Discrepancies reveal shallow understanding.
 
-## The 18 Skills
+## The 21 Skills
 
 | # | Skill | Core Capability |
 |---:|---|---|
@@ -55,16 +56,19 @@ Through trial and error training two agents (a debugging agent and ChemicalExper
 | 6 | Chemical LLM | When to use LLM reasoning vs computation |
 | 7 | Molecular Generation | SELFIES VAE, KL collapse detection, novelty metrics |
 | 8 | 3D Generation | E(3)-equivariant diffusion, point cloud to molecule |
-| 9 | Molecular Docking | Receptor prep, redocking validation, virtual screening, batch robustness |
-| 10 | ML Force Fields | MACE-OFF geometry optimization, conformer ranking, QC prescreen |
+| 9 | Molecular Docking | Receptor prep, virtual screening, batch robustness, multi-seed pose verification, GNINA CNN rescoring |
+| 10 | ML Force Fields | MACE-OFF geometry optimization, conformer ranking, QC prescreen with calibration |
 | 11 | Experiment Planning | DMTA cycle orchestration, multi-objective scoring |
 | 12 | Literature Review | Search strategies, source verification, evidence tables |
 | 13 | Kinase SAR | Hinge binder motif analysis, coverage KPI, structure-activity |
 | 14 | Reactivity Safety | Reactive group flagging, project denylists, chronic disease hard rejects |
 | 15 | Protonation & Tautomers | pH-dependent multi-state enumeration, confidence scoring, best-state docking |
-| 16 | Docking Interactions | ProLIF interaction fingerprints, hinge H-bond validation, pose QC |
+| 16 | Docking Interactions | ProLIF interaction fingerprints, hinge H-bond validation, PLIF recovery quantification |
 | 17 | Scaffold-Conditioned Generation | VAE diagnostics, anti-collapse strategies, constrained decoding (Strategy E) |
 | 18 | Pocket-Conditioned Diffusion | DiffSBDD 3D ligand generation, GPU inference, substructure inpainting |
+| 19 | Binding Affinity Prediction | Boltz-2 affinity (isolated env), IC50 + binder probability, target calibration |
+| 20 | Panel Selection | Multi-signal conflict-aware selection, 2x2 disagreement grid, auditable rationale |
+| 21 | Structure QC Lite | PoseBusters geometry/pose plausibility, post-gen + post-dock checkpoints |
 
 Each skill document is in `skills/*/SKILL.md`.
 
@@ -76,7 +80,7 @@ Each skill document is in `skills/*/SKILL.md`.
 - **Gates, not guidelines.** Hard thresholds (SA ≤ 6, QED > 0.3, hinge H-bond = required) that must be passed.
 - **One sentence per skill.** If you can't state the core rule in one sentence, the skill is too broad.
 
-## The Migration Test: IPF/ALK5 (5 Cycles)
+## The Migration Test: IPF/ALK5 (6 Cycles)
 
 After validating on DRD2, I gave the agent an open-ended task with no guidance:
 
@@ -146,17 +150,32 @@ Replaced the SELFIES VAE with DiffSBDD, a pocket-conditioned 3D diffusion model:
 - **Key discovery:** DiffSBDD's 3D coordinates are optimized for docking pose, not molecular stability (MACE strain 450-630 kcal/mol). Solution: use DiffSBDD for molecular design, RDKit re-embed for QC geometry.
 - **DFT:** 3/3 PASS (100% vs Cycle 3-4's 50%) — best candidate Vina -10.01, score_final 10.404
 
+### Cycle 6: Full 21-Skill Pipeline
+
+First cycle using all new tools (PoseBusters, multi-seed docking, GNINA rescoring, Boltz-2 affinity, panel selection):
+
+- **Generation:** 91 molecules, 85 RDKit-valid (93.4%)
+- **PoseBusters QC (new):** 56/91 PB-valid (61.5%) — caught 35% more geometry issues than RDKit alone
+- **Safety:** 43 survivors (23% reject — lowest ever)
+- **Docking:** Best Vina -10.04
+- **Multi-seed robustness (new):** 7 hinge-positive molecules → only 1 survived 3-seed pose convergence + hinge consistency check
+- **GNINA rescoring (new):** CNN-based scoring as orthogonal ranking signal
+- **Boltz-2 affinity (new):** Weak signal on ALK5 (calibration: active mean binder_prob 0.27 vs decoy 0.10)
+- **Panel selection (new):** Conflict-aware 2x2 grid, selected 3 candidates with relaxed hinge gate (≥0.67)
+- **DFT:** 2/2 PASS (100%) — best candidate mol_0064, score_final **10.432** (new record)
+
 ### Progress Across Cycles
 
-| Metric | Cycle 1 | Cycle 2 | Cycle 3 | Cycle 4 | Cycle 5 |
-|--------|---------|---------|---------|---------|---------|
-| Top5 hinge H-bond | 1/5 (20%) | 4/5 (80%) | 4/5 (80%) | 3/5 (60%) | 3/5 (60%) |
-| Generation method | Unconditional VAE | Rejection sampling | Logit bias | Logit bias | DiffSBDD |
-| Best Vina score | -9.591 | -9.158 | -8.927 | -9.997 | **-10.270** |
-| DFT PASS rate | — | — | 50% | 50% | **100%** |
-| Safety reject rate | 29% | 41% | 54% | 53% | **28%** |
+| Metric | Cycle 1 | Cycle 2 | Cycle 3 | Cycle 4 | Cycle 5 | Cycle 6 |
+|--------|---------|---------|---------|---------|---------|---------|
+| Generation method | Unconditional VAE | Rejection sampling | Logit bias | Logit bias | DiffSBDD | DiffSBDD |
+| PB-valid rate | — | — | — | — | 55.1% | **61.5%** |
+| Safety reject rate | 29% | 41% | 54% | 53% | 28% | **23%** |
+| Best Vina score | -9.591 | -9.158 | -8.927 | -9.997 | **-10.270** | -10.04 |
+| DFT PASS rate | — | — | 50% | 50% | 100% | **100%** |
+| Best score_final | — | — | — | — | 10.404 | **10.432** |
 
-**CE↔QE collaboration statistics:** 9 molecules submitted for DFT across 3 cycles. 6 PASS, 3 OPT_FAIL (33% overall fail rate; 0% in Cycle 5).
+**CE↔QE collaboration statistics:** 11 molecules submitted for DFT across 4 cycles. 8 PASS, 3 OPT_FAIL (27% overall fail rate). DiffSBDD era (Cycles 5-6): **5/5 = 100% PASS**.
 
 ## Architecture Lessons Learned
 
@@ -165,6 +184,10 @@ Replaced the SELFIES VAE with DiffSBDD, a pocket-conditioned 3D diffusion model:
 **2. Pocket-conditioned diffusion changes everything.** DiffSBDD produces better molecules (lower safety reject, better Vina scores, higher DFT pass rate) without needing any conditioning hacks. But its 3D coordinates are not suitable for QC — use the SMILES, not the geometry.
 
 **3. Interaction analysis is mandatory.** Vina scores alone mask critical binding mode failures. In Cycle 1, 80% of top candidates lacked hinge H-bonds despite acceptable scores.
+
+**4. Multi-signal validation catches silent failures.** Cycle 6 demonstrated that 7 molecules passing single-run hinge H-bond checks collapsed to just 1 when multi-seed robustness was applied. PoseBusters caught 35% more geometry issues than RDKit sanitization alone.
+
+**5. Boltz-2 requires per-target calibration.** On ALK5, Boltz-2 binder probability shows weak but directional signal (active mean 0.27 vs decoy 0.10), while absolute IC50 predictions are unreliable (2 orders of magnitude off). Use as tiebreaker, not primary signal.
 
 ## Practical Lessons
 
@@ -180,13 +203,14 @@ Replaced the SELFIES VAE with DiffSBDD, a pocket-conditioned 3D diffusion model:
 - The generation problem remains hard. No amount of post-hoc filtering fixes a generator exploring the wrong chemical space.
 - Pocket-conditioned generation (DiffSBDD) is a step change over string-based VAEs for structure-based drug design.
 - Multi-agent collaboration works. CE→QE handoff with typed JSON contracts and explicit gates closed the loop from generation to quantum-chemical verification.
+- Multi-signal validation is worth the compute cost. Single-metric ranking produces false positives that only surface in expensive downstream experiments.
 
 ## Repository Structure
 
 ```
 ├── README.md                            # This file
 ├── OpenClaw-Agent-Training-Guide.md     # Full methodology (Sections 1-12.9)
-├── PLAYBOOK.md                          # Agent's operational playbook (18 skills)
+├── PLAYBOOK.md                          # Agent's operational playbook (21 skills)
 ├── SECURITY.md                          # Security & privacy guidelines
 ├── skills/
 │   ├── chem-qsar/SKILL.md              # 1: QSAR modeling
@@ -206,13 +230,17 @@ Replaced the SELFIES VAE with DiffSBDD, a pocket-conditioned 3D diffusion model:
 │   ├── chem-protonation-tautomer/SKILL.md # 15: Protonation & tautomers
 │   ├── chem-docking-interactions/SKILL.md # 16: Docking interactions
 │   ├── chem-scaffold-conditioned-gen/SKILL.md # 17: Conditioned generation
-│   └── chem-pocket-diffusion/SKILL.md # 18: Pocket-conditioned diffusion
+│   ├── chem-pocket-diffusion/SKILL.md # 18: Pocket-conditioned diffusion
+│   ├── chem-affinity-prediction/SKILL.md # 19: Binding affinity prediction
+│   ├── chem-panel-selection/SKILL.md  # 20: Panel selection
+│   └── chem-structure-qc-lite/SKILL.md # 21: Structure QC lite
 ├── case-studies/
 │   ├── ipf-cycle1/                    # Cycle 1: autonomous pipeline + self-diagnosis
 │   ├── ipf-cycle2/                    # Cycle 2: 6 conditioning experiments
 │   ├── ipf-cycle3/                    # Cycle 3: logit bias decoding
 │   ├── ipf-cycle4/                    # Cycle 4: full CE↔QE collaboration
 │   ├── ipf-cycle5/                    # Cycle 5: DiffSBDD + 100% DFT pass
+│   ├── ipf-cycle6/                    # Cycle 6: full 21-skill pipeline
 │   └── ipf-project-conclusion.md      # Final results across all cycles
 └── .gitignore
 ```
@@ -222,7 +250,8 @@ Replaced the SELFIES VAE with DiffSBDD, a pocket-conditioned 3D diffusion model:
 - **Platform:** [OpenClaw](https://github.com/openclaw/openclaw)
 - **Model:** GPT-5.2 via OpenAI Codex API
 - **Infrastructure:** Linux + Docker (GPU optional; configuration-dependent)
-- **Chemistry:** RDKit, AutoDock Vina, ProLIF, MACE-OFF, DiffSBDD, PyTorch, e3nn, ASE
+- **Chemistry:** RDKit, AutoDock Vina, GNINA 1.3, ProLIF, MACE-OFF, DiffSBDD, PoseBusters, PyTorch, e3nn, ASE
+- **Affinity prediction:** Boltz-2 (isolated conda environment)
 - **Quantum Chemistry (via QuantumExpert):** PySCF (B97-D/def2-SVP)
 
 ## License
