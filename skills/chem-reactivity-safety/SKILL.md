@@ -7,15 +7,6 @@ metadata: { "openclaw": { "emoji": "🚨", "requires": { "bins": ["python3"], "p
 
 # Reactivity & Safety: Structural Alert Screening
 
-### Workspace variable
-
-Use a workspace path variable in commands so this repo does not hard-code a personal directory:
-
-```bash
-OPENCLAW_WORKSPACE=<OPENCLAW_WORKSPACE_PATH>
-```
-
-
 Drug candidates can look great on paper — good activity, decent QED, passing Lipinski — and still fail because they contain structural features that cause toxicity, metabolic instability, or assay interference. This skill turns medicinal chemistry safety knowledge into computable, auditable gates.
 
 ## When to Use
@@ -611,3 +602,163 @@ def make_project_denylist(additional_alerts):
 ## One-Sentence Rule
 
 **Every candidate must pass structural alert screening before entering final ranking — "danger" is a hard reject, "warning" is a flag for chemist review.**
+
+## Phase 2: ADMET-AI ML Enhancement
+
+Keep the existing SMARTS workflow exactly as-is.
+
+Use ADMET-AI as a **second layer**, not a replacement:
+- **Layer 1 (hard filter):** SMARTS / PAINS / reactive / chronic alerts
+- **Layer 2 (ML enhancement):** ADMET-AI predictions via ToolUniverse
+
+### Policy
+
+1. **SMARTS remains the hard gate.**
+   - If the SMARTS layer says hard reject, reject.
+2. **ADMET-AI is a review layer.**
+   - If SMARTS says PASS but ADMET-AI says high risk, do **not** auto-reject.
+   - Mark as **`flag_for_review`**.
+3. **Backward compatibility is required.**
+   - Existing SMARTS logic and outputs remain valid.
+   - This phase only adds `admet_scores` and `combined_risk`.
+
+### What to predict
+
+Use ToolUniverse ADMET-AI tools when available for signals such as:
+- BBB penetration
+- CYP inhibition / metabolic liability
+- oral bioavailability
+- hERG risk
+- (optionally) hepatotoxicity / clearance / plasma protein binding
+
+### Minimal ToolUniverse pattern
+
+```python
+from tooluniverse import ToolUniverse
+
+tu = ToolUniverse()
+tu.load_tools()
+
+result = tu.run({
+    "name": "<ADMET_AI_tool_name>",
+    "arguments": {"smiles": "CCO"}
+})
+```
+
+### Example code (ML enhancement wrapper)
+
+```python
+#!/opt/conda/envs/chem/bin/python
+from __future__ import annotations
+
+from typing import Any
+from tooluniverse import ToolUniverse
+
+
+def _safe_run(tu: ToolUniverse, name: str, arguments: dict[str, Any]) -> dict[str, Any]:
+    try:
+        return tu.run({"name": name, "arguments": arguments})
+    except Exception as e:
+        return {"status": "error", "error": str(e), "tool": name}
+
+
+def admet_ai_layer(smiles: str) -> dict[str, Any]:
+    """Second-layer ML enhancement using ToolUniverse ADMET-AI tools.
+
+    Adjust tool names to match your ToolUniverse install.
+    Returns a normalized score bundle.
+    """
+    tu = ToolUniverse()
+    tu.load_tools()
+
+    # Replace these with the exact ADMET-AI tool names exposed in your install.
+    bbb = _safe_run(tu, "ADMETAI_predict_bbb", {"smiles": smiles})
+    cyp = _safe_run(tu, "ADMETAI_predict_cyp_inhibition", {"smiles": smiles})
+    oral = _safe_run(tu, "ADMETAI_predict_oral_bioavailability", {"smiles": smiles})
+    herg = _safe_run(tu, "ADMETAI_predict_herg", {"smiles": smiles})
+
+    # Normalize into a stable dictionary even if raw tool schemas differ.
+    return {
+        "bbb": bbb,
+        "cyp": cyp,
+        "oral_bioavailability": oral,
+        "herg": herg,
+    }
+
+
+def combine_structural_and_ml(*, structural_result: dict[str, Any], admet_scores: dict[str, Any]) -> dict[str, Any]:
+    """Combine rule-based safety with ADMET-AI predictions.
+
+    combined_risk semantics:
+    - high   : SMARTS layer already says danger / hard reject
+    - medium : SMARTS passes but ML flags high risk -> review
+    - low    : no strong rule hits, no strong ML concern detected
+    """
+    severity = structural_result.get("overall_severity", "clean")
+    hard_reject = structural_result.get("hard_reject", False)
+
+    # Placeholder ML interpretation logic.
+    # Replace with schema-aware parsing for your ToolUniverse ADMET-AI outputs.
+    ml_high_risk = False
+    review_reasons = []
+
+    text_blob = str(admet_scores).lower()
+    if "herg" in text_blob and ("high" in text_blob or "risk" in text_blob):
+        ml_high_risk = True
+        review_reasons.append("ml:herg")
+    if "bbb" in text_blob and "high" in text_blob:
+        review_reasons.append("ml:bbb")
+    if "cyp" in text_blob and "inhib" in text_blob:
+        review_reasons.append("ml:cyp")
+
+    flag_for_review = False
+    if hard_reject or severity == "danger":
+        combined_risk = "high"
+    elif ml_high_risk:
+        combined_risk = "medium"
+        flag_for_review = True
+    else:
+        combined_risk = "low"
+
+    return {
+        "alerts": structural_result.get("alerts", []),
+        "admet_scores": admet_scores,
+        "combined_risk": combined_risk,
+        "flag_for_review": flag_for_review,
+        "review_reasons": review_reasons,
+    }
+```
+
+### Upgraded output format
+
+For each molecule, emit:
+
+```python
+{
+  "smiles": "CCOc1ccc(...)",
+  "alerts": [...],
+  "admet_scores": {
+    "bbb": {...},
+    "cyp": {...},
+    "oral_bioavailability": {...},
+    "herg": {...}
+  },
+  "combined_risk": "low"
+}
+```
+
+### Conflict handling
+
+The critical case is:
+- **SMARTS = PASS**
+- **ADMET-AI = high risk**
+
+Action:
+- do **not** auto reject
+- return `combined_risk = "medium"`
+- return `flag_for_review = True`
+- keep the molecule visible in downstream reports
+
+Why:
+- SMARTS are explicit mechanistic red flags
+- ADMET-AI is probabilistic and should guide triage, not silently override hard chemistry logic

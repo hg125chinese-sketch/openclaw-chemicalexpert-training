@@ -1,19 +1,8 @@
 ---
 name: chem-target-validation
-description: >-
-  Validate therapeutic targets using a 10-phase framework powered by
-  ToolUniverse APIs. Outputs GO/NO-GO scorecard with evidence grading.
+description: Validate a therapeutic target for drug discovery using a practical 10-phase framework powered by ToolUniverse APIs (Open Targets, ChEMBL, UniProt, Pharos, DrugBank/clinical proxies, PDB/AlphaFold, PubMed). Input: target (gene symbol or Ensembl), optional disease and modality. Output: validation markdown report + JSON scorecard with GO/NO-GO tiering. Hard gate: target ID disambiguation must succeed.
 homepage: https://docs.openclaw.ai
-metadata:
-  openclaw:
-    emoji: "🎯"
-    requires:
-      bins:
-        - python3
-      python:
-        - tooluniverse
-        - pandas
-        - requests
+metadata: { "openclaw": { "emoji": "🎯", "requires": { "bins": ["python3"], "python": ["tooluniverse", "pandas", "requests"] } } }
 ---
 
 # chem-target-validation — should we work on this target at all?
