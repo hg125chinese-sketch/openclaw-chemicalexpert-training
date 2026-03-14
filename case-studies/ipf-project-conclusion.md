@@ -1,6 +1,6 @@
 # IPF / ALK5 (TGFBR1) — Project Conclusion (CE↔QE)
 
-This report summarizes the full IPF/ALK5 project across **5 cycles**, focusing on what was learned about conditioned generation, docking/interaction KPIs, and the CE↔QE collaboration loop for DFT QC.
+This report summarizes the full IPF/ALK5 project across **6 cycles**, focusing on what was learned about conditioned generation, docking/interaction KPIs, and the CE↔QE collaboration loop for DFT QC.
 
 ---
 
@@ -13,6 +13,7 @@ This report summarizes the full IPF/ALK5 project across **5 cycles**, focusing o
 | 3 | Improve efficiency vs rejection | Strategy E (logit-bias decoding) succeeded; cross-attn conditioning failed | **4/5** hinge H-bond | 4 sent → 2 PASS / 2 OPT_FAIL | (tracked; cycle-specific) |
 | 4 | Full CE↔QE loop + prescreen calibration | Strategy E scaled; docking batch1; QC prescreen + QE | **3/5** hinge H-bond (Top5 from docked 50) | 2 sent → 1 PASS / 1 OPT_FAIL | **53%** (VAE-based) |
 | 5 | Pocket-conditioned generation + QC stabilization | **DiffSBDD** (pocket-conditioned 3D diffusion) | **3/5** hinge H-bond (Top5 from docked 50) | 3 sent → 3 PASS / 0 OPT_FAIL | **28%** |
+| 6 | Full upgraded pipeline (PoseBusters + multi-seed + GNINA + PLIF recovery + panel selection) | DiffSBDD + upgraded gates | (panel-driven; hinge robustness + recovery used) | 2 sent → 2 PASS / 0 OPT_FAIL | **23%** (post-PB set) |
 
 Notes:
 - “Top5 hinge H-bond” is evaluated on docked poses via interaction analysis (ProLIF), not inferred from motifs alone.
@@ -25,12 +26,14 @@ DFT PASS molecules discovered in the CE↔QE loop:
 
 | Final rank* | Cycle | ID | Vina | gap (eV) | score_final | Comment |
 |---:|---:|---|---:|---:|---:|---|
-| 1 | 5 | cycle5_top5_hinge_1 | **-10.010** | 2.71 | **10.404** | Best PASS so far (strongest docking among PASS + 0% QC failure in Cycle 5) |
-| 2 | 4 | cycle4_top5_hinge_2 | -9.102 | 2.38 | 9.424 | Prior best PASS before Cycle 5 |
-| 3 | 5 | cycle5_top5_hinge_2 | -9.134 | 2.38 | 9.315 | PASS; higher dipole penalty |
-| 4 | 5 | cycle5_top5_hinge_3 | -8.935 | 2.42 | 9.186 | PASS |
-| 5 | 3 | cycle3_top5_hinge_4 | -8.295 | 2.77 | 8.658 | PASS |
-| 6 | 3 | cycle3_top5_hinge_2 | -8.003 | 2.09 | 8.354 | PASS |
+| 1 | 6 | mol_0064 | **-10.040** | 2.90 | **10.432** | Best PASS so far by the current score (very strong docking; multi-seed hinge robust) |
+| 2 | 5 | cycle5_top5_hinge_1 | -10.010 | 2.71 | 10.404 | Prior best PASS (Cycle 5) |
+| 3 | 4 | cycle4_top5_hinge_2 | -9.102 | 2.38 | 9.424 | Prior best PASS before Cycle 5 |
+| 4 | 5 | cycle5_top5_hinge_2 | -9.134 | 2.38 | 9.315 | PASS; higher dipole penalty |
+| 5 | 5 | cycle5_top5_hinge_3 | -8.935 | 2.42 | 9.186 | PASS |
+| 6 | 3 | cycle3_top5_hinge_4 | -8.295 | 2.77 | 8.658 | PASS |
+| 7 | 3 | cycle3_top5_hinge_2 | -8.003 | 2.09 | 8.354 | PASS |
+| 8 | 6 | mol_0017 | -7.253 | 2.68 | 7.617 | PASS (weaker docking but QC PASS; included for completeness) |
 
 \*Ranking basis: a simple, auditable multi-objective score used for handoff triage:
 - primary: docking (more negative Vina is better)
@@ -64,15 +67,16 @@ This is a decision-support ranking, not a claim of true binding affinity.
 ## 4) CE↔QE collaboration statistics
 
 Across the CE↔QE QC loop:
-- Sent to QE (DFT QC): **9 molecules**
-- DFT PASS: **6**
+- Sent to QE (DFT QC): **11 molecules**
+- DFT PASS: **8**
 - DFT OPT_FAIL: **3**
-- Fail rate: **33%**
+- Fail rate: **27%**
 
 Breakdown:
 - Cycle 3: 4 sent → 2 PASS / 2 OPT_FAIL
 - Cycle 4: 2 sent → 1 PASS / 1 OPT_FAIL
 - Cycle 5: 3 sent → 3 PASS / 0 OPT_FAIL
+- Cycle 6: 2 sent → 2 PASS / 0 OPT_FAIL
 
 ---
 
