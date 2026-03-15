@@ -360,6 +360,58 @@ Use this at the **start** of other workflows when inputs may be aliases, free te
    - Cache resolved entities to JSON to avoid repeated API calls
    - Downstream skills should consume Ensembl / UniProt / ChEMBL / InChIKey / EFO, not raw free text
 
+## Skill: chem-self-diagnosis (failure diagnosis + safe recovery)
+Use this when a script or pipeline step fails and CE should diagnose before asking for help.
+
+1) Consult:
+   - /home/node/.openclaw/.npm-global/bin/qmd search "<query>" -c chem-self-diagnosis -n 10
+   - /home/node/.openclaw/.npm-global/bin/qmd get qmd://chem-self-diagnosis/SKILL.md -l 320
+2) Key rules:
+   - Always read the last ~50 lines of stderr / traceback first
+   - Classify into exactly one primary class: `ENV_ERROR`, `DATA_ERROR`, `RUNTIME_ERROR`, `TOOL_ERROR`, or `SCIENCE_ERROR`
+   - Apply known project workarounds before inventing new fixes (e.g. `gnina-run`, absolute `bust`, ToolUniverse one-time `load_tools()`)
+   - Auto-retry only for low-risk deterministic fixes, and at most 2 times
+   - Always write `diagnosis_report.json` with root cause, attempted fixes, result, and recommendation
+
+## Skill: chem-reasoning (evidence → scientific inference)
+Use this when data is available and CE should explain what it means, not just repeat numbers.
+
+1) Consult:
+   - /home/node/.openclaw/.npm-global/bin/qmd search "<query>" -c chem-reasoning -n 10
+   - /home/node/.openclaw/.npm-global/bin/qmd get qmd://chem-reasoning/SKILL.md -l 320
+2) Key rules:
+   - Choose a reasoning mode: `anomaly`, `conflict`, `trend`, or `hypothesis`
+   - Anchor every inference in real evidence objects or auditable source records
+   - Do not average away contradictory signals; explain why tools might disagree
+   - Always include `confidence` and at least one actionable suggestion or testable prediction
+   - Use this automatically at cycle end, on notable `EvidenceCollection` conflicts, or when the human asks "why"
+
+## Skill: chem-cycle-learning (cross-cycle lessons)
+Use this after multiple cycles to extract reusable patterns and lessons from campaign history.
+
+1) Consult:
+   - /home/node/.openclaw/.npm-global/bin/qmd search "<query>" -c chem-cycle-learning -n 10
+   - /home/node/.openclaw/.npm-global/bin/qmd get qmd://chem-cycle-learning/SKILL.md -l 320
+2) Key rules:
+   - Aggregate a stable `cycle_history.json` across all available cycles
+   - Track both quantitative metrics and qualitative lessons from case studies / conclusions
+   - Identify generation trends, bottlenecks, tool reliability, failure modes, and method-improvement effects
+   - Emit normalized lesson objects with `lesson_id`, `source_cycles`, `confidence`, `actionable`, and `status`
+   - Treat this as retrospective memory building; chem-reasoning consumes these lessons later
+
+## Skill: chem-autonomous-cycle (supervised next-step planning)
+Use this after a cycle closes when CE should propose the next move instead of waiting passively.
+
+1) Consult:
+   - /home/node/.openclaw/.npm-global/bin/qmd search "<query>" -c chem-autonomous-cycle -n 10
+   - /home/node/.openclaw/.npm-global/bin/qmd get qmd://chem-autonomous-cycle/SKILL.md -l 320
+2) Key rules:
+   - First consume `chem-cycle-learning` outputs and `chem-reasoning` outputs
+   - Identify the single biggest current bottleneck before generating options
+   - Propose only 2–3 next-step plans, each with evidence, effort, impact, risk, and reversibility
+   - Recommend exactly one plan, but **do not execute it** without explicit human confirmation (unless auto mode is explicitly enabled)
+   - Route later execution failures through `chem-self-diagnosis`, and keep all supporting evidence standardized via `chem-evidence-schema`
+
 ## Browser automation
 
 Prefer `agent-browser` (CLI) for web automation:
