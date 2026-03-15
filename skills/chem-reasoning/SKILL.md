@@ -427,6 +427,169 @@ Prediction:
 
 ---
 
+## Literature-Grounded Reasoning
+
+Reasoning gets stronger when it is checked against prior art instead of staying purely local to the current pipeline.
+
+When CE makes a notable inference, it should actively use:
+- **chem-literature** (skill 12)
+- ToolUniverse literature tools (for example PubMed / arXiv search)
+
+Goal:
+- verify whether the observation already has precedent
+- distinguish "supported by literature" from "novel and still speculative"
+- enrich scientific reasoning without replacing project-local evidence
+
+Core rule:
+- **local evidence comes first; literature is the external cross-check**
+
+### When to do this
+
+Use literature-grounded reasoning especially when:
+- an anomaly looks biologically interesting
+- a generated hypothesis could already exist in the literature
+- a trend looks unusually strong and needs benchmarking
+- a human asks for stronger justification
+
+Do not force literature search for every trivial observation.
+Use it when it changes the confidence or interpretation.
+
+### 1) Anomaly detection + literature validation
+
+Workflow:
+1. detect the anomaly locally
+2. formulate 1–3 focused literature queries
+3. search PubMed / arXiv for similar observations
+4. compare the current finding against literature precedent
+
+Example:
+- `mol_0021` Boltz binder probability `0.698`
+- search query like: `TGFBR1 inhibitor high affinity novel scaffold`
+
+Interpretation policy:
+- if similar findings exist in literature, treat the anomaly as more grounded
+- if no similar findings are found, label it as:
+  - `novel finding, needs experimental validation`
+
+Evidence upgrade rule:
+- when local computational evidence is materially supported by relevant literature, it may justify an upgrade in interpretation strength
+- example: `T3 -> T2`
+- do **not** upgrade automatically just because a vaguely related paper exists
+
+### 2) Hypothesis generation + literature support
+
+Workflow:
+1. generate a testable hypothesis from project evidence
+2. search for prior support or refutation
+3. check whether the hypothesis is already known, contested, or unstudied
+
+Example:
+- hypothesis: `DiffSBDD training data may underrepresent kinase hinge binders`
+- query: `DiffSBDD training data bias kinase hinge`
+
+Interpretation policy:
+- literature support can move a hypothesis from pure speculation toward a better-supported early claim
+- example status change:
+  - `hypothesis -> preliminary`
+
+But:
+- prior publication is not proof that the hypothesis explains *this* project’s behavior
+
+### 3) Trend reasoning + literature benchmarking
+
+Workflow:
+1. detect a trend across cycles
+2. search for benchmark ranges in similar pipelines
+3. ask whether the observed trend is normal, unusually good, or suspiciously strong
+
+Example:
+- DFT PASS rate reaches `100%`
+- search for typical DFT / QC handoff success rates in comparable molecular design workflows
+
+Interpretation policy:
+- if our metric is much better than published norms, consider two possibilities:
+  - the workflow is genuinely improved
+  - the sample size is still too small for a strong claim
+
+This is exactly where literature prevents overconfidence.
+
+### 4) Literature support object
+
+Add this field to reasoning outputs when literature grounding was used:
+
+```json
+{
+  "literature_support": {
+    "searched_queries": [
+      "TGFBR1 inhibitor high affinity novel scaffold",
+      "DiffSBDD training data bias kinase hinge"
+    ],
+    "relevant_papers": [
+      {
+        "title": "Paper title",
+        "year": 2024,
+        "key_finding": "short note on why it matters"
+      }
+    ],
+    "literature_verdict": "supports",
+    "evidence_upgrade": "T3→T2"
+  }
+}
+```
+
+Allowed `literature_verdict` values:
+- `supports`
+- `contradicts`
+- `novel`
+- `inconclusive`
+
+Allowed `evidence_upgrade`:
+- a concrete upgrade string such as `T3→T2`
+- or `null`
+
+### 5) ToolUniverse call pattern
+
+Preferred pattern:
+
+```python
+from tooluniverse import ToolUniverse
+
+tu = ToolUniverse()
+tu.load_tools()
+
+res = tu.run({
+    'name': 'PubMed_search_articles',
+    'arguments': {
+        'query': 'TGFBR1 inhibitor high affinity novel scaffold',
+        'max_results': 5
+    }
+})
+```
+
+Notes:
+- reuse a loaded ToolUniverse client when possible
+- keep queries narrow and hypothesis-linked
+- do not spam literature search with vague prompts
+
+### 6) Interaction with existing reasoning modes
+
+This section does **not** replace anomaly / conflict / trend / hypothesis reasoning.
+It upgrades them.
+
+Practical rule:
+- first reason from project evidence
+- then ask whether literature supports, contradicts, or contextualizes that reasoning
+
+### 7) Anti-patterns for literature-grounded reasoning
+
+Do **not**:
+- use literature search as a substitute for project evidence
+- claim support from a paper that only loosely resembles the observation
+- upgrade evidence grade without a relevant mechanistic or empirical match
+- call something disproven just because one paper disagrees
+
+---
+
 ## Confidence rules
 
 Use rough confidence bands:
