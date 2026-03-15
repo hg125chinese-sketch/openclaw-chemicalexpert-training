@@ -27,7 +27,7 @@ QMD=/home/node/.openclaw/.npm-global/bin/qmd
 - **chem-literature** → chemistry/AI4Chem paper search + deep reads (arXiv / Semantic Scholar / PubChem)
 - **agent-browser** → browser automation / scraping / form filling / UI regression
 
-## Skill routing table (skills 1–24)
+## Skill routing table (skills 1–28)
 
 Principle: when the user says "use skill X", route to the corresponding **QMD collection** and follow its `SKILL.md`.
 
@@ -57,6 +57,10 @@ Principle: when the user says "use skill X", route to the corresponding **QMD co
 | 22 | **chem-target-validation** | Multi-phase target triage for drug discovery: target identity, disease link, tractability, chemical starting points, clinical precedent, safety, structure, literature, and GO/NO-GO scoring | target validation report, scorecard.json, tier (T1–T4), validation roadmap |
 | 23 | **chem-evidence-schema** | Standardize outputs from multiple skills into a shared Evidence / EvidenceCollection format with provenance, grades, confidence, and conflict detection | evidence JSON, summarized evidence bundle, conflict list for panel selection |
 | 24 | **chem-entity-resolver** | Resolve target / molecule / disease aliases into canonical IDs before downstream queries (Ensembl, UniProt, ChEMBL, InChIKey, EFO), with cache-backed reuse | ResolvedTarget / ResolvedMolecule / ResolvedDisease objects, cache JSONs, confidence scores |
+| 25 | **chem-self-diagnosis** | Diagnose failed scripts / pipeline steps, classify failure type, apply known workarounds, and emit `diagnosis_report.json` before escalating | diagnosis report, root-cause summary, attempted fixes, retry recommendation |
+| 26 | **chem-reasoning** | Turn evidence and cycle outputs into scientific inference: anomaly detection, conflict analysis, trend interpretation, and testable hypotheses | reasoning objects, anomaly/conflict notes, scientific conclusions, next-test suggestions |
+| 27 | **chem-cycle-learning** | Aggregate metrics and lessons across many cycles to build reusable historical memory and cross-cycle strategy | `cycle_history.json`, lessons table/JSON, retrospective summary, validated/preliminary lessons |
+| 28 | **chem-autonomous-cycle** | After a cycle finishes, propose the best next move using lessons + reasoning + bottleneck detection, but stop for human approval before execution | proposal set (2–3 options), bottleneck statement, recommended next step, effort/impact/risk estimate |
 
 ## Standard QMD workflow (copyable)
 
