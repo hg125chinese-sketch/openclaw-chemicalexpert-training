@@ -4,7 +4,7 @@ How I trained an LLM agent to autonomously run drug discovery workflows — and 
 
 ## TL;DR
 
-I trained an AI agent ("ChemicalExpert") with **24 specialized chemistry skills** using a systematic 7-step methodology. The agent learned to autonomously plan and execute Design-Make-Test-Analyze (DMTA) cycles for drug discovery. Over **6 iterative cycles** on the same target, the agent:
+I trained an AI agent ("ChemicalExpert") with **28 specialized chemistry skills** using a systematic 7-step methodology. The agent learned to autonomously plan and execute Design-Make-Test-Analyze (DMTA) cycles for drug discovery. Over **6 iterative cycles** on the same target, the agent:
 
 - Diagnosed its own output quality problems (VAE KL collapse, missing hinge binders)
 - Ran 6 controlled experiments to fix molecular generation, documenting every failure
@@ -72,6 +72,10 @@ Through trial and error training two agents (a debugging agent and ChemicalExper
 | 22 | Target Validation | ToolUniverse 10-phase target validation, 0-100 scoring, GO/NO-GO tiering |
 | 23 | Evidence Schema | Standardized evidence objects, T1-T4 grading, cross-skill conflict detection |
 | 24 | Entity Resolver | Target/molecule/disease ID disambiguation via multi-DB cross-validation |
+| 25 | Self-Diagnosis | Failure classification, known-issue lookup, auto-recovery with retry limits |
+| 26 | Reasoning | Anomaly detection, conflict analysis, trend inference, hypothesis generation |
+| 27 | Cycle Learning | Cross-cycle metric aggregation, pattern recognition, lesson extraction |
+| 28 | Autonomous Cycle | Post-cycle review, bottleneck identification, next-step proposal generation |
 
 Each skill document is in `skills/*/SKILL.md`.
 
@@ -153,7 +157,7 @@ Replaced the SELFIES VAE with DiffSBDD, a pocket-conditioned 3D diffusion model:
 - **Key discovery:** DiffSBDD's 3D coordinates are optimized for docking pose, not molecular stability (MACE strain 450-630 kcal/mol). Solution: use DiffSBDD for molecular design, RDKit re-embed for QC geometry.
 - **DFT:** 3/3 PASS (100% vs Cycle 3-4's 50%) — best candidate Vina -10.01, score_final 10.404
 
-### Cycle 6: Full 24-Skill Pipeline
+### Cycle 6: Full 28-Skill Pipeline
 
 First cycle using all new tools (PoseBusters, multi-seed docking, GNINA rescoring, Boltz-2 affinity, panel selection):
 
@@ -213,7 +217,7 @@ First cycle using all new tools (PoseBusters, multi-seed docking, GNINA rescorin
 ```
 ├── README.md                            # This file
 ├── OpenClaw-Agent-Training-Guide.md     # Full methodology (Sections 1-12.9)
-├── PLAYBOOK.md                          # Agent's operational playbook (24 skills)
+├── PLAYBOOK.md                          # Agent's operational playbook (28 skills)
 ├── SECURITY.md                          # Security & privacy guidelines
 ├── skills/
 │   ├── chem-qsar/SKILL.md              # 1: QSAR modeling
@@ -246,7 +250,7 @@ First cycle using all new tools (PoseBusters, multi-seed docking, GNINA rescorin
 │   ├── ipf-cycle3/                    # Cycle 3: logit bias decoding
 │   ├── ipf-cycle4/                    # Cycle 4: full CE↔QE collaboration
 │   ├── ipf-cycle5/                    # Cycle 5: DiffSBDD + 100% DFT pass
-│   ├── ipf-cycle6/                    # Cycle 6: full 24-skill pipeline
+│   ├── ipf-cycle6/                    # Cycle 6: full 28-skill pipeline
 │   └── ipf-project-conclusion.md      # Final results across all cycles
 └── .gitignore
 ```
