@@ -7,15 +7,6 @@ metadata: { "openclaw": { "emoji": "📑", "requires": { "bins": ["curl", "pytho
 
 # Chemical Literature Search & Critical Reading
 
-### Workspace variable
-
-Use a workspace path variable in commands so this repo does not hard-code a personal directory:
-
-```bash
-OPENCLAW_WORKSPACE=<OPENCLAW_WORKSPACE_PATH>
-```
-
-
 Find, retrieve, and deeply analyze chemistry and AI-for-chemistry papers, then produce structured notes that integrate into the `research/` knowledge base.
 
 ## When to Use
@@ -255,7 +246,25 @@ Install PyMuPDF if needed (run once):
 - **Index**: Always update `research/ai4chem/index.md` after adding new material
 - **Cross-links**: Use relative links between notes: `[see VAE training tricks](../notes/molecule-generation/vae-training-tricks-for-strings.md)`
 - **Numbering**: Papers are numbered sequentially per topic: `001-`, `002-`, etc. Check existing files before assigning the next number.
-- **Git**: After writing notes, `cd $OPENCLAW_WORKSPACE && git add -A && git commit -m "lit: add <short description>"`
+- **Git**: After writing notes, `cd /home/node/.openclaw/workspace-chemicalexpert && git add -A && git commit -m "lit: add <short description>"`
+
+## ToolUniverse Integration (optional)
+
+- **When to use:** when you want a first-class SDK path for literature search instead of hand-written PubMed/arXiv/bioRxiv requests.
+- **Tool names:** `PubMed_search_articles`, arXiv / bioRxiv search tools exposed by your ToolUniverse install.
+- **Code example:**
+
+```python
+from tooluniverse import ToolUniverse
+
+tu = ToolUniverse()
+tu.load_tools()
+
+papers = tu.run({
+    "name": "PubMed_search_articles",
+    "arguments": {"query": "TGFBR1 idiopathic pulmonary fibrosis", "max_results": 10}
+})
+```
 
 ## Checklist Before Finishing
 

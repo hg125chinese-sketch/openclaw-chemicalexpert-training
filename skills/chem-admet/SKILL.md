@@ -405,6 +405,24 @@ def combined_drugability_score(smi):
 - [ ] **Integration with pipeline**: Connected to generation (skill 3) and retrosynthesis (skill 4)?
 - [ ] **SA Score included**: From skill 4 for synthesizability context
 
+## ToolUniverse Integration (optional)
+
+- **When to use:** when you want a fast ML prediction supplement from ToolUniverse ADMET-AI tools on top of the existing rule/property workflow.
+- **Tool names:** ADMET-AI prediction tools exposed by your ToolUniverse install (e.g. BBB, hERG, CYP, oral bioavailability).
+- **Code example:**
+
+```python
+from tooluniverse import ToolUniverse
+
+tu = ToolUniverse()
+tu.load_tools()
+
+herg = tu.run({
+    "name": "ADMETAI_predict_herg",
+    "arguments": {"smiles": "CCOc1ccc(...)"}
+})
+```
+
 ## Integration with Knowledge Base
 
 - **Save profiles** to `research/ai4chem/admet/<date>-<candidate-set>.md`

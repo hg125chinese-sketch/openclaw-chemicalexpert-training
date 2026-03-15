@@ -746,6 +746,36 @@ These can be merged into your docking results table (one row per pose) for downs
   - break ties within a quadrant, or
   - select a “third-signal champion” when Vina/Boltz disagree.
 
+### Future: flexible pocket docking (PackDock) — deferred
+
+Rigid docking can produce false positives when a candidate only fits under an unrealistic single pocket conformation.
+For **finalists** (typically 3–10 molecules), a future upgrade is **flexible sidechain docking** to test whether key interactions (especially hinge) are stable under pocket flexibility.
+
+**Tool:** PackDock
+
+Use case:
+- After you have finalist poses (passed hinge H-bond hard gate) and have done **multi-seed robustness**.
+- Validate whether hinge interaction persists across multiple pocket sidechain conformations.
+
+Install requirements (high-cost; isolated environment):
+- **Separate conda env** (do not mix with `/opt/conda/envs/chem`)
+  - Python **3.8**
+  - torch **1.13**
+  - CUDA **11.7**
+- **ADFR-Suite**
+- PackDock model weights (Zenodo)
+
+Integration point in the DMTA loop:
+- **after** Phase 4.4 multi-seed robustness
+- **before** chem-panel-selection
+
+Suggested gate (ranking-oriented, not a first-line hard gate):
+- hinge interaction is stable in **≥ X%** of sampled pocket conformations
+  - choose X based on budget (e.g., 60–80%)
+
+Status:
+- **Not yet installed; deferred** until rigid docking false-positive rate becomes a bottleneck.
+
 ## Phase 5: Score Interpretation & Analysis
 
 ### 5.1 Score Guidelines
@@ -977,6 +1007,28 @@ Is docking worth running?
 - [ ] **ADMET filter applied**: Lipinski/QED on hits (skill 6)?
 - [ ] **SA Score included**: Synthesizability of hits (skill 4)?
 - [ ] **Exhaustiveness stated**: What search depth was used?
+
+## ToolUniverse Integration (optional)
+
+- **When to use:** when you need target structures fast and want SDK-based PDB / AlphaFold lookup instead of manual download.
+- **Tool names:** PDBe / PDB search tools and AlphaFold lookup tools exposed by your ToolUniverse install.
+- **Code example:**
+
+```python
+from tooluniverse import ToolUniverse
+
+tu = ToolUniverse()
+tu.load_tools()
+
+pdb_hits = tu.run({
+    "name": "PDBeSIFTS_get_best_structures",
+    "arguments": {"uniprot_accession": "P36897"}
+})
+af = tu.run({
+    "name": "alphafold_get_prediction",
+    "arguments": {"qualifier": "P36897"}
+})
+```
 
 ## Integration with Knowledge Base
 

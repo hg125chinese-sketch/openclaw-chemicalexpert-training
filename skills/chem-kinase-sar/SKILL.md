@@ -7,15 +7,6 @@ metadata: { "openclaw": { "emoji": "🔑", "requires": { "bins": ["python3"], "p
 
 # Kinase SAR: Hinge Binders, Scaffold Coverage & Chemical Space KPIs
 
-### Workspace variable
-
-Use a workspace path variable in commands so this repo does not hard-code a personal directory:
-
-```bash
-OPENCLAW_WORKSPACE=<OPENCLAW_WORKSPACE_PATH>
-```
-
-
 Kinase inhibitors are the largest class of targeted cancer and anti-inflammatory drugs. Their design is constrained by well-understood SAR — especially the hinge region interaction. This skill turns kinase medicinal chemistry knowledge into computable, auditable gates.
 
 ## When to Use
@@ -601,3 +592,25 @@ NEW_TARGET_SAR = {
 ## One-Sentence Rule
 
 **If the candidate pool doesn't contain kinase hinge binder motifs at ≥50% of training set frequency, the generator is broken — fix generation before filtering.**
+
+## ToolUniverse Integration (optional)
+
+- **When to use:** when you want public kinase-target SAR context directly from Open Targets + ChEMBL without custom API glue.
+- **Tool names:** Open Targets target/disease tools and ChEMBL activity / molecule search tools exposed by your ToolUniverse install.
+- **Code example:**
+
+```python
+from tooluniverse import ToolUniverse
+
+tu = ToolUniverse()
+tu.load_tools()
+
+ot = tu.run({
+    "name": "OpenTargets_get_target_id_description_by_name",
+    "arguments": {"targetName": "TGFBR1"}
+})
+chembl = tu.run({
+    "name": "ChEMBL_search_activities",
+    "arguments": {"query": "TGFBR1 kinase inhibitor"}
+})
+```

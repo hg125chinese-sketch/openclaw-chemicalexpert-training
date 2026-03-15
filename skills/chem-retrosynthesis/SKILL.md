@@ -637,6 +637,44 @@ def score_molecule_for_synthesis(smi):
 - Alternative routes considered: ...
 ```
 
+## Future upgrade (deferred): ML retrosynthesis engines (RetroChimera / DeepRetro)
+
+This skill currently focuses on a reproducible baseline: heuristics + templates + SA score + forward validation.
+
+A future upgrade is to integrate ML retrosynthesis engines (e.g., **RetroChimera** / **DeepRetro**) to improve:
+- route diversity (multiple disconnections)
+- step ranking quality
+- challenging heterocycles / kinase-like scaffolds
+
+Why deferred:
+- Installation and model/weights management overhead is non-trivial.
+- ROI is uncertain until our current heuristic+template baseline becomes the bottleneck.
+
+Suggested integration point:
+- Use **after** you have a final shortlist/panel (3–10) from **chem-panel-selection**.
+- Use ML retro as a *second opinion* to propose alternative routes and to stress-test feasibility.
+
+Status:
+- **Deferred / not yet installed**.
+
+## ToolUniverse Integration (optional)
+
+- **When to use:** when you want a quick public-data check on starting-material identity / supplier context before deeper route work.
+- **Tool names:** PubChem compound search / lookup tools exposed by your ToolUniverse install.
+- **Code example:**
+
+```python
+from tooluniverse import ToolUniverse
+
+tu = ToolUniverse()
+tu.load_tools()
+
+compound = tu.run({
+    "name": "PubChem_search_compounds",
+    "arguments": {"query": "methyl 4-aminobenzoate"}
+})
+```
+
 ## Integration with Knowledge Base
 
 - **Save analyses** to `research/ai4chem/retrosynthesis/<target-slug>.md`

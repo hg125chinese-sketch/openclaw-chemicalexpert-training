@@ -7,15 +7,6 @@ metadata: { "openclaw": { "emoji": "🧬", "requires": { "bins": ["python3"], "p
 
 # QSAR / Molecular Property Prediction
 
-### Workspace variable
-
-Use a workspace path variable in commands so this repo does not hard-code a personal directory:
-
-```bash
-OPENCLAW_WORKSPACE=<OPENCLAW_WORKSPACE_PATH>
-```
-
-
 Build rigorous, reproducible molecular property prediction models. This skill emphasizes **what most tutorials get wrong**: splitting, leakage, evaluation, and honest reporting.
 
 ## When to Use
@@ -433,4 +424,22 @@ train, valid, test = datasets
 - ...
 ```
 
-- **Git commit**: `cd $OPENCLAW_WORKSPACE && git add -A && git commit -m "exp: <dataset> <model> scaffold-split"`
+- **Git commit**: `cd /home/node/.openclaw/workspace-chemicalexpert && git add -A && git commit -m "exp: <dataset> <model> scaffold-split"`
+
+## ToolUniverse Integration (optional)
+
+- **When to use:** when QSAR starts from public activity data and you want ToolUniverse ChEMBL access instead of writing your own REST scripts.
+- **Tool names:** ChEMBL target / activity / molecule search tools exposed by your ToolUniverse install.
+- **Code example:**
+
+```python
+from tooluniverse import ToolUniverse
+
+tu = ToolUniverse()
+tu.load_tools()
+
+acts = tu.run({
+    "name": "ChEMBL_search_activities",
+    "arguments": {"query": "TGFBR1"}
+})
+```
