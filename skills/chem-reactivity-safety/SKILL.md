@@ -762,3 +762,223 @@ Action:
 Why:
 - SMARTS are explicit mechanistic red flags
 - ADMET-AI is probabilistic and should guide triage, not silently override hard chemistry logic
+
+## Phase 3: Real-World Evidence
+
+Use a third layer for **contextual safety flags** from real-world / translational data sources.
+
+This is **not** a hard filter by default.
+Its job is to answer:
+- “Do drugs on this target/pathway show concerning adverse event patterns?”
+- “Is there already a safety story here that structure-only methods cannot see?”
+- “Does the target/pathway have known toxicology associations?”
+
+### Layer model (upgraded)
+
+The safety report is now three-layer:
+- **Layer 1:** SMARTS structural alerts (**hard filter**)
+- **Layer 2:** ADMET-AI ML predictions (**soft scores**)
+- **Layer 3:** Real-world evidence (**contextual flags**)
+
+Final field:
+- `combined_risk` in {`low`, `medium`, `high`, `critical`}
+
+Suggested semantics:
+- `critical`: SMARTS hard reject **or** severe real-world safety evidence aligned with the same risk direction
+- `high`: strong model/rule concern but not enough for absolute reject
+- `medium`: mixed or contextual concern; chemist review needed
+- `low`: no major issues surfaced in any layer
+
+### Data sources
+
+#### 3.1 openFDA / FAERS adverse events
+
+Query ToolUniverse tools related to openFDA / FAERS.
+For target-related drugs, extract at minimum:
+- `serious_count`
+- `death_count`
+- `top_adverse_events`
+
+Typical use:
+- first resolve target → known drugs / inhibitors on-target or same-pathway
+- then query FAERS/openFDA for those drug names
+
+#### 3.2 DGIdb drug-gene interactions
+
+Query known drug–gene interactions for the target.
+This helps answer:
+- is the target already considered druggable / clinically actionable?
+- are there known drug interactions that imply safety-relevant biology?
+
+#### 3.3 CTD toxicogenomics
+
+Use CTD-style toxicology associations through ToolUniverse to extract:
+- toxicity endpoints
+- pathway perturbations
+- repeated adverse biology themes for the compound or target
+
+This layer is useful when structure-only filters are clean but toxicology context is concerning.
+
+### ToolUniverse pattern
+
+```python
+from tooluniverse import ToolUniverse
+
+tu = ToolUniverse()
+tu.load_tools()
+
+result = tu.run({
+    "name": "tool_name_here",
+    "arguments": {"key": "value"}
+})
+```
+
+### Example code (real-world evidence layer)
+
+```python
+#!/opt/conda/envs/chem/bin/python
+from __future__ import annotations
+
+from typing import Any
+from tooluniverse import ToolUniverse
+
+
+def _safe_run(tu: ToolUniverse, name: str, arguments: dict[str, Any]) -> dict[str, Any]:
+    try:
+        return tu.run({"name": name, "arguments": arguments})
+    except Exception as e:
+        return {"status": "error", "error": str(e), "tool": name}
+
+
+def real_world_evidence_layer(*, target: str, related_drugs: list[str], compound_name: str | None = None) -> dict[str, Any]:
+    """Collect contextual safety evidence from real-world / translational sources.
+
+    Replace tool names with the exact names exposed in your ToolUniverse install.
+    """
+    tu = ToolUniverse()
+    tu.load_tools()
+
+    faers_rows = []
+    for drug in related_drugs:
+        faers_rows.append({
+            "drug": drug,
+            "faers": _safe_run(tu, "FAERS_search_serious_reports_by_drug", {"drug_name": drug}),
+            "openfda": _safe_run(tu, "OpenFDA_search_drug_events", {"drug_name": drug}),
+        })
+
+    dgidb = _safe_run(tu, "DGIdb_get_gene_druggability", {"genes": [target]})
+
+    # Replace with exact CTD tool name(s) in your install.
+    ctd = _safe_run(tu, "CTD_search", {"query": compound_name or target})
+
+    return {
+        "faers_openfda": faers_rows,
+        "dgidb": dgidb,
+        "ctd": ctd,
+    }
+
+
+def combine_three_layers(*, structural_result: dict[str, Any], admet_scores: dict[str, Any], real_world: dict[str, Any]) -> dict[str, Any]:
+    """Combine SMARTS + ADMET-AI + real-world evidence into one safety report."""
+    severity = structural_result.get("overall_severity", "clean")
+    hard_reject = structural_result.get("hard_reject", False)
+
+    review_flags = []
+    combined_risk = "low"
+
+    # Layer 1 dominates.
+    if hard_reject or severity == "danger":
+        combined_risk = "critical"
+        review_flags.append("layer1_hard_reject")
+
+    # Layer 2 soft concerns.
+    admet_blob = str(admet_scores).lower()
+    if "herg" in admet_blob and ("high" in admet_blob or "risk" in admet_blob):
+        review_flags.append("layer2_herg")
+        if combined_risk == "low":
+            combined_risk = "medium"
+
+    # Layer 3 contextual concerns.
+    rw_blob = str(real_world).lower()
+    if "death" in rw_blob or "black box" in rw_blob:
+        review_flags.append("layer3_real_world_serious_signal")
+        if combined_risk == "low":
+            combined_risk = "high"
+        elif combined_risk == "medium":
+            combined_risk = "high"
+
+    return {
+        "alerts": structural_result.get("alerts", []),
+        "admet_scores": admet_scores,
+        "real_world_evidence": real_world,
+        "combined_risk": combined_risk,
+        "review_flags": review_flags,
+    }
+```
+
+### Evidence-schema output (skill 23)
+
+Each layer should emit Evidence objects rather than only ad hoc fields.
+
+Examples:
+
+```python
+# Layer 1 SMARTS
+Evidence.now(
+    evidence_id="mol_0064_smarts_pass",
+    source_tool="smarts_safety",
+    source_db="SMARTS_rules",
+    evidence_type="safety",
+    evidence_grade="T2",
+    target_id="ENSG00000106799",
+    mol_id="mol_0064",
+    value="pass",
+    unit=None,
+    confidence=0.8,
+)
+
+# Layer 2 ADMET-AI
+Evidence.now(
+    evidence_id="mol_0064_herg_ml",
+    source_tool="admet_ai_herg",
+    source_db="ADMET-AI",
+    evidence_type="safety",
+    evidence_grade="T3",
+    target_id="ENSG00000106799",
+    mol_id="mol_0064",
+    value="medium_risk",
+    unit=None,
+    confidence=0.5,
+)
+
+# Layer 3 FAERS / openFDA
+Evidence.now(
+    evidence_id="tgfbr1_pathway_galunisertib_faers",
+    source_tool="faers_real_world",
+    source_db="FAERS/openFDA",
+    evidence_type="safety",
+    evidence_grade="T2",
+    target_id="ENSG00000106799",
+    mol_id=None,
+    value="serious_signal_present",
+    unit=None,
+    confidence=0.6,
+    metadata={
+        "drug": "galunisertib",
+        "serious_count": 123,
+        "death_count": 7,
+        "top_adverse_events": ["...", "..."]
+    },
+)
+```
+
+### Interpretation rule
+
+Do not confuse real-world evidence with compound-specific certainty.
+
+If the real-world layer flags risk:
+- it may reflect **target biology**
+- or **drug-specific legacy liabilities**
+- or **class effects**
+
+So this layer should usually **raise review priority**, not silently hard reject a new molecule.
