@@ -27,7 +27,7 @@ QMD=/home/node/.openclaw/.npm-global/bin/qmd
 - **chem-literature** → chemistry/AI4Chem paper search + deep reads (arXiv / Semantic Scholar / PubChem)
 - **agent-browser** → browser automation / scraping / form filling / UI regression
 
-## Skill routing table (skills 1–21)
+## Skill routing table (skills 1–24)
 
 Principle: when the user says "use skill X", route to the corresponding **QMD collection** and follow its `SKILL.md`.
 
@@ -46,7 +46,7 @@ Principle: when the user says "use skill X", route to the corresponding **QMD co
 | 11 | **chem-experiment** | DMTA cycle orchestration (multi-skill chaining, multi-objective gates) | Cycle report, decision rationale, next-step plan |
 | 12 | **chem-literature** | Literature search / deep reading / evidence line numbers, reproduction chain | Reading notes, evidence citations, reproduction commands, repo diffs |
 | 13 | **chem-kinase-sar** | Kinase hinge binder motif / KPI, coverage audit | Motif distribution, coverage_ratio, KPI report |
-| 14 | **chem-reactivity-safety** | Reactivity / toxicity / chronic disease safety hard reject (denylist) | Per-molecule flags, hard reject stats, survivors.csv |
+| 14 | **chem-reactivity-safety** | Three-layer safety evaluation: SMARTS structural alerts (hard filter) + ADMET-AI ML enhancement + real-world evidence (FAERS/openFDA, DGIdb, CTD) | Per-molecule alerts, ADMET scores, real-world flags, combined_risk, survivors.csv |
 | 15 | **chem-protonation-tautomer** | pH-dependent protomer/tautomer, multi-state preparation & enumeration | Multi-state enumeration, expansion ratio, best-state records |
 | 16 | **chem-docking-interactions** | Docking pose interaction fingerprints, hinge H-bond validation, interaction rerank | Hinge yes/no + details, key residue coverage, rerank table |
 | 17 | **chem-scaffold-conditioned-gen** | Scaffold/fragment-conditioned generation (data audit, latent conditioning, constrained sampling) | Conditioning hit rate, KPI gate, generation set & diagnosis report |
@@ -54,6 +54,9 @@ Principle: when the user says "use skill X", route to the corresponding **QMD co
 | 19 | **chem-affinity-prediction** | Affinity prediction as an orthogonal signal on **DFT PASS** molecules (Boltz-2); helps resolve ranking disagreements between docking and ML signals | affinity table (affinity + binder_prob), panel recommendation, disagreement analysis |
 | 20 | **chem-panel-selection** | End-of-cycle **panel selection** from a shortlist (3–10) under conflicting signals; use a **2x2 Vina vs Boltz-2 disagreement grid**; apply **hard gates before ranking signals** | panel selection report section, 2x2 grid, auditable per-molecule rationale, anti-overfitting rules |
 | 21 | **chem-structure-qc-lite** | Lightweight geometry/pose QC with **PoseBusters** at two checkpoints: post-generation (after safety, before docking) and post-docking (before ProLIF); `pb_valid` is a **hard gate**; optional recovery via RDKit re-embed + MMFF | qc.tsv (PoseBusters), per-mol pb_valid + failure reasons, recovered vs rejected summary |
+| 22 | **chem-target-validation** | Multi-phase target triage for drug discovery: target identity, disease link, tractability, chemical starting points, clinical precedent, safety, structure, literature, and GO/NO-GO scoring | target validation report, scorecard.json, tier (T1–T4), validation roadmap |
+| 23 | **chem-evidence-schema** | Standardize outputs from multiple skills into a shared Evidence / EvidenceCollection format with provenance, grades, confidence, and conflict detection | evidence JSON, summarized evidence bundle, conflict list for panel selection |
+| 24 | **chem-entity-resolver** | Resolve target / molecule / disease aliases into canonical IDs before downstream queries (Ensembl, UniProt, ChEMBL, InChIKey, EFO), with cache-backed reuse | ResolvedTarget / ResolvedMolecule / ResolvedDisease objects, cache JSONs, confidence scores |
 
 ## Standard QMD workflow (copyable)
 
@@ -313,6 +316,45 @@ Two checkpoints:
    - Run PoseBusters at both checkpoints (generated SDF, and docked poses)
    - Recovery path (optional): RDKit re-embed (ETKDGv3) + MMFF minimize → re-test with PoseBusters
    - Report standardized outputs: `mol_id, pb_valid, n_warnings, failure_reasons` (+ `recovered`)
+
+## Skill: chem-target-validation (multi-phase target triage)
+Use this before committing a discovery campaign to a target.
+
+1) Consult:
+   - /home/node/.openclaw/.npm-global/bin/qmd search "<query>" -c chem-target-validation -n 10
+   - /home/node/.openclaw/.npm-global/bin/qmd get qmd://chem-target-validation/SKILL.md -l 320
+2) Key rules:
+   - Phase 0 target disambiguation is a **hard gate**
+   - Cross-check Open Targets + UniProt + ChEMBL before scoring
+   - Score disease association, tractability, safety, clinical precedent, and validation evidence separately
+   - Output both markdown report and `validation_scorecard.json`
+   - Final decision must be auditable (`T1–T4`, GO/NO-GO, roadmap)
+
+## Skill: chem-evidence-schema (shared evidence objects + conflict detection)
+Use this when multiple skills need to write into one common evidence layer.
+
+1) Consult:
+   - /home/node/.openclaw/.npm-global/bin/qmd search "<query>" -c chem-evidence-schema -n 10
+   - /home/node/.openclaw/.npm-global/bin/qmd get qmd://chem-evidence-schema/SKILL.md -l 320
+2) Key rules:
+   - Wrap outputs as `Evidence`, do not overwrite original raw outputs
+   - Keep provenance explicit: `source_tool`, `source_db`, `evidence_grade`, `confidence`
+   - Use `EvidenceCollection` for filtering, summarizing, and conflict detection
+   - Same `mol_id` + same `evidence_type` + contradictory tools => conflict
+   - chem-panel-selection should consume `EvidenceCollection`, not ad hoc columns
+
+## Skill: chem-entity-resolver (target / molecule / disease canonicalization)
+Use this at the **start** of other workflows when inputs may be aliases, free text, or mixed identifier systems.
+
+1) Consult:
+   - /home/node/.openclaw/.npm-global/bin/qmd search "<query>" -c chem-entity-resolver -n 10
+   - /home/node/.openclaw/.npm-global/bin/qmd get qmd://chem-entity-resolver/SKILL.md -l 320
+2) Key rules:
+   - Resolve target / molecule / disease first, then query downstream databases with canonical IDs
+   - Target hard gate: at least **2 databases** must confirm the same entity
+   - Molecule resolution must include RDKit sanitization + canonical SMILES
+   - Cache resolved entities to JSON to avoid repeated API calls
+   - Downstream skills should consume Ensembl / UniProt / ChEMBL / InChIKey / EFO, not raw free text
 
 ## Browser automation
 
