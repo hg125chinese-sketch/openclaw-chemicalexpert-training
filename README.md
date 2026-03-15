@@ -4,14 +4,15 @@ How I trained an LLM agent to autonomously run drug discovery workflows — and 
 
 ## TL;DR
 
-I trained an AI agent ("ChemicalExpert") with **28 specialized chemistry skills** using a systematic 7-step methodology. The agent learned to autonomously plan and execute Design-Make-Test-Analyze (DMTA) cycles for drug discovery. Over **6 iterative cycles** on the same target, the agent:
+I trained an AI agent ("ChemicalExpert") with **28 specialized chemistry skills** using a systematic 7-step methodology. The agent learned to autonomously plan and execute Design-Make-Test-Analyze (DMTA) cycles for drug discovery. Over **7 iterative cycles** on the same target, the agent:
 
 - Diagnosed its own output quality problems (VAE KL collapse, missing hinge binders)
 - Ran 6 controlled experiments to fix molecular generation, documenting every failure
 - Improved Top5 candidate quality from **20% to 80%** passing the critical hinge H-bond gate
 - Discovered that SELFIES GRU VAE decoders structurally ignore conditioning signals — a finding validated across 6 independent experiments
-- Upgraded to pocket-conditioned 3D diffusion (DiffSBDD), achieving **100% DFT pass rate** across two consecutive cycles
-- Built a full multi-signal pipeline with PoseBusters geometry QC, GNINA CNN rescoring, multi-seed pose robustness, Boltz-2 affinity prediction, and conflict-aware panel selection
+- Upgraded to pocket-conditioned 3D diffusion (DiffSBDD), achieving **100% DFT pass rate** across three consecutive cycles
+- Built a full multi-signal pipeline with PoseBusters geometry QC, GNINA CNN rescoring, multi-seed pose robustness, Boltz-2 affinity prediction, conflict-aware panel selection, and ToolUniverse-powered target validation
+- Developed cognitive capabilities: self-diagnosis, scientific reasoning, cross-cycle learning, and supervised autonomous cycle planning
 
 ## The Problem
 
@@ -24,7 +25,7 @@ I wanted an agent that could:
 - Catch its own mistakes before I catch them
 - Work on new targets without being retrained
 
-The platform is [OpenClaw](https://github.com/openclaw/openclaw), an open-source agent framework. The underlying model is GPT-5.2 via OpenAI's Codex API. The agent runs in a Docker container (GPU optional), with access to conda environments, RDKit, PyTorch, and standard scientific Python.
+The platform is [OpenClaw](https://github.com/openclaw/openclaw), an open-source agent framework. The underlying model is GPT-5.4 via OpenAI's Codex API. The agent runs in a Docker container with GPU access (RTX 4080), with conda environments, RDKit, PyTorch, and 1996 scientific tools via ToolUniverse.
 
 ## The 7-Step Training Methodology
 
@@ -44,24 +45,28 @@ Through trial and error training two agents (a debugging agent and ChemicalExper
 
 **Step 7: Self-Review** — Ask the agent to write its own skill review. Compare against your observations. Discrepancies reveal shallow understanding.
 
-## The 24 Skills
+## The 28 Skills
+
+Skills are organized in three layers: computational chemistry (1-21), scientific infrastructure (22-24), and cognitive capabilities (25-28).
+
+### Layer 1: Computational Chemistry (Skills 1-21)
 
 | # | Skill | Core Capability |
 |---:|---|---|
 | 1 | QSAR Modeling | Scaffold splits, RF baseline, descriptor selection |
 | 2 | Graph Neural Networks | GCN for molecular properties, scaffold generalization vs RF |
-| 3 | ADMET Prediction | Rules-first (Lipinski/Veber), QED gates, chronic disease flags |
+| 3 | ADMET Prediction | Rules-first (Lipinski/Veber), QED gates, chronic disease flags, ADMET-AI ML enhancement |
 | 4 | Retrosynthetic Analysis | Template matching, forward validation, route scoring |
 | 5 | Reaction Conditions | Yield prediction, reagent selection, total yield calculation |
 | 6 | Chemical LLM | When to use LLM reasoning vs computation |
 | 7 | Molecular Generation | SELFIES VAE, KL collapse detection, novelty metrics |
 | 8 | 3D Generation | E(3)-equivariant diffusion, point cloud to molecule |
-| 9 | Molecular Docking | Receptor prep, virtual screening, batch robustness, multi-seed pose verification, GNINA CNN rescoring |
+| 9 | Molecular Docking | Receptor prep, virtual screening, multi-seed pose verification, GNINA CNN rescoring |
 | 10 | ML Force Fields | MACE-OFF geometry optimization, conformer ranking, QC prescreen with calibration |
 | 11 | Experiment Planning | DMTA cycle orchestration, multi-objective scoring |
 | 12 | Literature Review | Search strategies, source verification, evidence tables |
 | 13 | Kinase SAR | Hinge binder motif analysis, coverage KPI, structure-activity |
-| 14 | Reactivity Safety | Reactive group flagging, project denylists, chronic disease hard rejects |
+| 14 | Reactivity Safety | Three-layer assessment: SMARTS alerts + ADMET-AI predictions + real-world evidence (openFDA/FAERS, DGIdb, CTD) |
 | 15 | Protonation & Tautomers | pH-dependent multi-state enumeration, confidence scoring, best-state docking |
 | 16 | Docking Interactions | ProLIF interaction fingerprints, hinge H-bond validation, PLIF recovery quantification |
 | 17 | Scaffold-Conditioned Generation | VAE diagnostics, anti-collapse strategies, constrained decoding (Strategy E) |
@@ -69,13 +74,23 @@ Through trial and error training two agents (a debugging agent and ChemicalExper
 | 19 | Binding Affinity Prediction | Boltz-2 affinity (isolated env), IC50 + binder probability, target calibration |
 | 20 | Panel Selection | Multi-signal conflict-aware selection, 2x2 disagreement grid, auditable rationale |
 | 21 | Structure QC Lite | PoseBusters geometry/pose plausibility, post-gen + post-dock checkpoints |
-| 22 | Target Validation | ToolUniverse 10-phase target validation, 0-100 scoring, GO/NO-GO tiering |
-| 23 | Evidence Schema | Standardized evidence objects, T1-T4 grading, cross-skill conflict detection |
-| 24 | Entity Resolver | Target/molecule/disease ID disambiguation via multi-DB cross-validation |
-| 25 | Self-Diagnosis | Failure classification, known-issue lookup, auto-recovery with retry limits |
-| 26 | Reasoning | Anomaly detection, conflict analysis, trend inference, hypothesis generation |
-| 27 | Cycle Learning | Cross-cycle metric aggregation, pattern recognition, lesson extraction |
-| 28 | Autonomous Cycle | Post-cycle review, bottleneck identification, next-step proposal generation |
+
+### Layer 2: Scientific Infrastructure (Skills 22-24)
+
+| # | Skill | Core Capability |
+|---:|---|---|
+| 22 | Target Validation | ToolUniverse 10-phase framework (disease association, druggability, chemical matter, clinical precedent, safety, pathway, structure, literature), 0-100 scoring, GO/NO-GO tiering |
+| 23 | Evidence Schema | Standardized evidence objects with T1-T4 grading, cross-skill data fusion, conflict detection |
+| 24 | Entity Resolver | Target/molecule/disease ID disambiguation via multi-DB cross-validation (OpenTargets + UniProt + ChEMBL), caching |
+
+### Layer 3: Cognitive Capabilities (Skills 25-28)
+
+| # | Skill | Core Capability |
+|---:|---|---|
+| 25 | Self-Diagnosis | Failure classification (ENV/DATA/RUNTIME/TOOL/SCIENCE), known-issue lookup from 7 cycles, auto-recovery with retry limits |
+| 26 | Reasoning | Anomaly detection, multi-signal conflict analysis, cross-cycle trend inference, testable hypothesis generation |
+| 27 | Cycle Learning | Cross-cycle metric aggregation, pattern recognition, lesson extraction with confidence grading |
+| 28 | Autonomous Cycle | Post-cycle bottleneck identification, next-step proposal generation (2-3 options with effort/impact/risk), human-in-the-loop approval |
 
 Each skill document is in `skills/*/SKILL.md`.
 
@@ -87,11 +102,15 @@ Each skill document is in `skills/*/SKILL.md`.
 - **Gates, not guidelines.** Hard thresholds (SA ≤ 6, QED > 0.3, hinge H-bond = required) that must be passed.
 - **One sentence per skill.** If you can't state the core rule in one sentence, the skill is too broad.
 
-## The Migration Test: IPF/ALK5 (6 Cycles)
+## The Migration Test: IPF/ALK5 (7 Cycles)
 
 After validating on DRD2, I gave the agent an open-ended task with no guidance:
 
 > "Find anti-fibrosis (IPF) drug candidates. Pirfenidone and nintedanib have limited efficacy."
+
+### Target Validation (Skill 22)
+
+Before any DMTA cycle, the agent performed systematic target validation of ALK5/TGFBR1 using the ToolUniverse 10-phase framework, querying Open Targets, ChEMBL, UniProt, Pharos, PDB, and PubMed. Result: **76/100 (T1 Strong GO)** — strong biology/chemistry validation but safety-constrained (TGF-β pathway systemic risk). This informed all subsequent cycles' safety-first weighting.
 
 ### Cycle 1: Autonomous Pipeline + Self-Diagnosis
 
@@ -157,32 +176,51 @@ Replaced the SELFIES VAE with DiffSBDD, a pocket-conditioned 3D diffusion model:
 - **Key discovery:** DiffSBDD's 3D coordinates are optimized for docking pose, not molecular stability (MACE strain 450-630 kcal/mol). Solution: use DiffSBDD for molecular design, RDKit re-embed for QC geometry.
 - **DFT:** 3/3 PASS (100% vs Cycle 3-4's 50%) — best candidate Vina -10.01, score_final 10.404
 
-### Cycle 6: Full 28-Skill Pipeline
+### Cycle 6: Multi-Signal Validation Pipeline
 
-First cycle using all new tools (PoseBusters, multi-seed docking, GNINA rescoring, Boltz-2 affinity, panel selection):
+First cycle using PoseBusters, multi-seed docking, GNINA rescoring, Boltz-2 affinity, and panel selection:
 
 - **Generation:** 91 molecules, 85 RDKit-valid (93.4%)
 - **PoseBusters QC (new):** 56/91 PB-valid (61.5%) — caught 35% more geometry issues than RDKit alone
-- **Safety:** 43 survivors (23% reject — lowest ever)
+- **Safety:** 43 survivors (23% reject)
 - **Docking:** Best Vina -10.04
 - **Multi-seed robustness (new):** 7 hinge-positive molecules → only 1 survived 3-seed pose convergence + hinge consistency check
 - **GNINA rescoring (new):** CNN-based scoring as orthogonal ranking signal
 - **Boltz-2 affinity (new):** Weak signal on ALK5 (calibration: active mean binder_prob 0.27 vs decoy 0.10)
 - **Panel selection (new):** Conflict-aware 2x2 grid, selected 3 candidates with relaxed hinge gate (≥0.67)
-- **DFT:** 2/2 PASS (100%) — best candidate mol_0064, score_final **10.432** (new record)
+- **DFT:** 2/2 PASS (100%) — best candidate mol_0064, score_final **10.432**
+
+### Cycle 7: Full 28-Skill Pipeline with Cognitive Capabilities
+
+First cycle using entity resolution, three-layer safety, evidence schema, and ToolUniverse integration:
+
+- **Entity resolution (new):** TGFBR1/ENSG00000106799/P36897 + EFO_0000768 canonicalized before any computation
+- **Generation:** 98 molecules, 93 RDKit-valid (94.9%)
+- **PoseBusters QC:** 61/93 PB-valid (65.6%) — new record
+- **Three-layer safety (new):** SMARTS + ADMET-AI + openFDA/FAERS → 51 survivors (16% reject — all-time lowest)
+- **Docking:** Best Vina -10.27
+- **Multi-seed robustness:** 5 hinge-positive → only 1 robust (mol_0021, hinge 3/3)
+- **Boltz-2 affinity:** mol_0021 binder_prob = **0.698** — highest ever on ALK5 (calibration active mean: 0.268)
+- **Panel selection with evidence schema (new):** All signals output as standardized Evidence objects with T1-T4 grading
+- **DFT:** 1/1 PASS (100%, B3LYP-D3(BJ)/def2-SVP) — mol_0021, score_final **9.136**
 
 ### Progress Across Cycles
 
-| Metric | Cycle 1 | Cycle 2 | Cycle 3 | Cycle 4 | Cycle 5 | Cycle 6 |
-|--------|---------|---------|---------|---------|---------|---------|
-| Generation method | Unconditional VAE | Rejection sampling | Logit bias | Logit bias | DiffSBDD | DiffSBDD |
-| PB-valid rate | — | — | — | — | 55.1% | **61.5%** |
-| Safety reject rate | 29% | 41% | 54% | 53% | 28% | **23%** |
-| Best Vina score | -9.591 | -9.158 | -8.927 | -9.997 | **-10.270** | -10.04 |
-| DFT PASS rate | — | — | 50% | 50% | 100% | **100%** |
-| Best score_final | — | — | — | — | 10.404 | **10.432** |
+| Metric | Cycle 1 | Cycle 2 | Cycle 3 | Cycle 4 | Cycle 5 | Cycle 6 | Cycle 7 |
+|--------|---------|---------|---------|---------|---------|---------|---------|
+| Generation method | Unconditional VAE | Rejection sampling | Logit bias | Logit bias | DiffSBDD | DiffSBDD | DiffSBDD |
+| PB-valid rate | — | — | — | — | 55.1% | 61.5% | **65.6%** |
+| Safety reject rate | 29% | 41% | 54% | 53% | 28% | 23% | **16%** |
+| Best Vina score | -9.591 | -9.158 | -8.927 | -9.997 | **-10.270** | -10.04 | -10.27 |
+| DFT PASS rate | — | — | 50% | 50% | 100% | 100% | **100%** |
+| Best score_final | — | — | — | — | 10.404 | **10.432** | 9.136 |
+| Boltz-2 best binder_prob | — | — | — | — | — | 0.12 | **0.698** |
 
-**CE↔QE collaboration statistics:** 11 molecules submitted for DFT across 4 cycles. 8 PASS, 3 OPT_FAIL (27% overall fail rate). DiffSBDD era (Cycles 5-6): **5/5 = 100% PASS**.
+**CE↔QE collaboration statistics:** 12 molecules submitted for DFT across 5 cycles. 9 PASS, 3 OPT_FAIL (25% overall fail rate). DiffSBDD era (Cycles 5-7): **6/6 = 100% PASS**.
+
+**Top candidates by multi-signal consensus:**
+- **mol_0064** (Cycle 6): Best Vina (-10.04) + highest score_final (10.432), but Boltz-2 binder_prob only 0.12
+- **mol_0021** (Cycle 7): Highest Boltz-2 binder_prob (0.698) + robust hinge (3/3), but lower Vina (-8.91)
 
 ## Architecture Lessons Learned
 
@@ -192,9 +230,15 @@ First cycle using all new tools (PoseBusters, multi-seed docking, GNINA rescorin
 
 **3. Interaction analysis is mandatory.** Vina scores alone mask critical binding mode failures. In Cycle 1, 80% of top candidates lacked hinge H-bonds despite acceptable scores.
 
-**4. Multi-signal validation catches silent failures.** Cycle 6 demonstrated that 7 molecules passing single-run hinge H-bond checks collapsed to just 1 when multi-seed robustness was applied. PoseBusters caught 35% more geometry issues than RDKit sanitization alone.
+**4. Multi-signal validation catches silent failures.** Cycles 6-7 demonstrated that molecules passing single-run hinge H-bond checks collapse to just 1 when multi-seed robustness is applied. PoseBusters caught 35% more geometry issues than RDKit sanitization alone.
 
-**5. Boltz-2 requires per-target calibration.** On ALK5, Boltz-2 binder probability shows weak but directional signal (active mean 0.27 vs decoy 0.10), while absolute IC50 predictions are unreliable (2 orders of magnitude off). Use as tiebreaker, not primary signal.
+**5. Boltz-2 requires per-target calibration.** On ALK5, Boltz-2 binder probability shows weak but directional signal (active mean 0.27 vs decoy 0.10), while absolute IC50 predictions are unreliable (2 orders of magnitude off). But mol_0021's 0.698 is a genuine outlier worth investigating.
+
+**6. Three-layer safety assessment outperforms rules alone.** SMARTS structural alerts + ADMET-AI ML predictions + real-world evidence (openFDA/FAERS) reduced safety reject rate from 23% to 16% while maintaining protective gates.
+
+**7. Entity resolution prevents silent evidence corruption.** Standardizing target/molecule/disease IDs before computation prevents the subtle errors that arise when different tools use different identifiers for the same entity.
+
+**8. Standardized evidence objects enable cross-skill reasoning.** The Evidence schema (skill 23) with T1-T4 grading and conflict detection allows the agent to reason about disagreements between tools rather than averaging away informative signals.
 
 ## Practical Lessons
 
@@ -204,6 +248,7 @@ First cycle using all new tools (PoseBusters, multi-seed docking, GNINA rescorin
 - Challenge the agent to find its own mistakes. Hand-fed corrections don't stick.
 - Keep skills < 700 lines. Split references into separate files.
 - Every experiment gets committed — failures are as valuable as successes.
+- Cognitive capabilities (reasoning, learning, self-diagnosis) are skills too — they can be taught the same way.
 
 **For AI + drug discovery:**
 - Self-diagnosis > raw capability. An agent that flags mediocre candidates as mediocre is more useful than one that calls them excellent.
@@ -211,6 +256,7 @@ First cycle using all new tools (PoseBusters, multi-seed docking, GNINA rescorin
 - Pocket-conditioned generation (DiffSBDD) is a step change over string-based VAEs for structure-based drug design.
 - Multi-agent collaboration works. CE→QE handoff with typed JSON contracts and explicit gates closed the loop from generation to quantum-chemical verification.
 - Multi-signal validation is worth the compute cost. Single-metric ranking produces false positives that only surface in expensive downstream experiments.
+- ToolUniverse integration (1996 scientific tools via unified API) dramatically accelerates target validation and evidence gathering.
 
 ## Repository Structure
 
@@ -233,36 +279,42 @@ First cycle using all new tools (PoseBusters, multi-seed docking, GNINA rescorin
 │   ├── chem-experiment/SKILL.md       # 11: Experiment planning
 │   ├── chem-literature/SKILL.md       # 12: Literature review
 │   ├── chem-kinase-sar/SKILL.md       # 13: Kinase SAR
-│   ├── chem-reactivity-safety/SKILL.md # 14: Reactivity safety
+│   ├── chem-reactivity-safety/SKILL.md # 14: Reactivity safety (3-layer)
 │   ├── chem-protonation-tautomer/SKILL.md # 15: Protonation & tautomers
 │   ├── chem-docking-interactions/SKILL.md # 16: Docking interactions
 │   ├── chem-scaffold-conditioned-gen/SKILL.md # 17: Conditioned generation
 │   ├── chem-pocket-diffusion/SKILL.md # 18: Pocket-conditioned diffusion
 │   ├── chem-affinity-prediction/SKILL.md # 19: Binding affinity prediction
 │   ├── chem-panel-selection/SKILL.md  # 20: Panel selection
-│   └── chem-structure-qc-lite/SKILL.md # 21: Structure QC lite
+│   ├── chem-structure-qc-lite/SKILL.md # 21: Structure QC lite
 │   ├── chem-target-validation/SKILL.md # 22: Target validation
 │   ├── chem-evidence-schema/SKILL.md  # 23: Evidence schema
-│   └── chem-entity-resolver/SKILL.md  # 24: Entity resolver
+│   ├── chem-entity-resolver/SKILL.md  # 24: Entity resolver
+│   ├── chem-self-diagnosis/SKILL.md   # 25: Self-diagnosis
+│   ├── chem-reasoning/SKILL.md        # 26: Scientific reasoning
+│   ├── chem-cycle-learning/SKILL.md   # 27: Cycle learning
+│   └── chem-autonomous-cycle/SKILL.md # 28: Autonomous cycle
 ├── case-studies/
 │   ├── ipf-cycle1/                    # Cycle 1: autonomous pipeline + self-diagnosis
 │   ├── ipf-cycle2/                    # Cycle 2: 6 conditioning experiments
 │   ├── ipf-cycle3/                    # Cycle 3: logit bias decoding
 │   ├── ipf-cycle4/                    # Cycle 4: full CE↔QE collaboration
 │   ├── ipf-cycle5/                    # Cycle 5: DiffSBDD + 100% DFT pass
-│   ├── ipf-cycle6/                    # Cycle 6: full 28-skill pipeline
+│   ├── ipf-cycle6/                    # Cycle 6: multi-signal validation pipeline
+│   ├── ipf-cycle7/                    # Cycle 7: full 28-skill pipeline + cognitive capabilities
 │   └── ipf-project-conclusion.md      # Final results across all cycles
 └── .gitignore
 ```
 
 ## Technical Stack
 
-- **Platform:** [OpenClaw](https://github.com/openclaw/openclaw)
-- **Model:** GPT-5.2 via OpenAI Codex API
-- **Infrastructure:** Linux + Docker (GPU optional; configuration-dependent)
+- **Platform:** [OpenClaw](https://github.com/openclaw/openclaw) v2026.3.11
+- **Model:** GPT-5.4 via OpenAI Codex API
+- **Scientific Tools:** [ToolUniverse](https://github.com/mims-harvard/ToolUniverse) SDK (1996 tools: Open Targets, ChEMBL, DrugBank, PubMed, openFDA, ADMET-AI, etc.)
+- **Infrastructure:** NixOS/WSL2 + Docker, RTX 4080 Laptop GPU
 - **Chemistry:** RDKit, AutoDock Vina, GNINA 1.3, ProLIF, MACE-OFF, DiffSBDD, PoseBusters, PyTorch, e3nn, ASE
 - **Affinity prediction:** Boltz-2 (isolated conda environment)
-- **Quantum Chemistry (via QuantumExpert):** PySCF (B97-D/def2-SVP)
+- **Quantum Chemistry (via QuantumExpert):** PySCF, B3LYP-D3(BJ)/def2-SVP
 
 ## License
 
