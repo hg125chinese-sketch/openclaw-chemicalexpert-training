@@ -216,7 +216,7 @@ First cycle using entity resolution, three-layer safety, evidence schema, and To
 | Best score_final | — | — | — | — | 10.404 | **10.432** | 9.136 |
 | Boltz-2 best binder_prob | — | — | — | — | — | 0.12 | **0.698** |
 
-**CE↔QE collaboration statistics:** 15 molecules submitted for DFT across 5 cycles + analog campaign. 12 PASS, 3 OPT_FAIL (20% overall fail rate). DiffSBDD era (Cycles 5-7): **6/6 = 100% PASS**.
+**CE↔QE collaboration statistics:** 15 molecules submitted for DFT across 5 cycles + analog campaign. 12 PASS, 3 OPT_FAIL (20% overall fail rate). DiffSBDD era (Cycles 5-7 + analogs): **9/9 = 100% PASS**.
 
 **Top candidates by multi-signal consensus:**
 - **mol_0064** (Cycle 6): Best Vina (-10.04) + highest score_final (10.432), but Boltz-2 binder_prob only 0.12
