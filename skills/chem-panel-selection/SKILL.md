@@ -72,6 +72,61 @@ Rule:
 
 ---
 
+## Pre-ranking: Hinge-Aware Sorting
+
+Before the usual panel-selection logic begins, use a **hinge-aware pre-ranking** step to decide which molecules even enter the interaction/robustness validation pool.
+
+Why:
+- pure Vina Top20 truncation can discard hinge-compatible molecules that are slightly weaker by docking score but much stronger mechanistically for kinase programs
+- this step does **not** replace later validation (multi-seed, PLIF recovery, QE, etc.)
+- it only changes the candidate pool entering those later stages
+
+### Default rule
+
+For the full set of docked molecules:
+1. run a **fast hinge H-bond pre-screen** on each pose
+   - ProLIF is acceptable
+   - a lighter distance-based proxy is also acceptable for speed
+2. compute a pre-ranking score:
+
+```text
+hinge_aware_score = hinge_hbond * (-vina_score)
+```
+
+Interpretation:
+- if `hinge_hbond = 1`, the molecule is promoted according to docking strength
+- if `hinge_hbond = 0`, it is deprioritized below hinge-positive molecules
+
+3. sort by `hinge_aware_score` descending
+4. take **Top20** from this hinge-aware ranking, not pure Vina Top20
+
+### Backtest evidence
+
+Cycle 7 backtest:
+- original strategy: **5/20 = 25%** hinge-positive in Vina Top20
+- hinge-aware pre-ranking: **13/20 = 65%** hinge-positive
+
+Cycle 6 backtest (supportive):
+- original strategy: **7/20 = 35%**
+- hinge-aware pre-ranking: **12/20 = 60%**
+
+Interpretation:
+- hinge-aware pre-ranking materially enriches the validation pool for kinase-relevant poses
+- this is a **pool construction change**, not a claim that all promoted molecules are true winners
+
+### Important boundary
+
+This step does **not** replace later panel-selection logic.
+It happens **before** the existing conflict-aware panel protocol.
+
+Later steps still apply:
+- multi-seed robustness
+- PLIF recovery / interaction evidence
+- Boltz-2 as orthogonal signal
+- QE DFT feasibility when relevant
+
+---
+
 ## Panel selection protocol (default)
 
 ### Step 0 — Define the decision context
