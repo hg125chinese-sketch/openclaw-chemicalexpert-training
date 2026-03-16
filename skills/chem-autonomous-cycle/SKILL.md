@@ -352,6 +352,79 @@ After cycle end, produce something like:
 
 ---
 
+## Environment Safety Protocol
+
+Autonomous planning is only useful if CE also respects environment boundaries.
+
+This section defines what CE may do alone, what requires human approval, and what is off-limits.
+
+### 1) CE may do autonomously (no human approval needed)
+
+Allowed:
+- write new `SKILL.md` files and install them into the QMD vault
+- write Python scripts **without running them**
+- search literature (for example via ToolUniverse / PubMed / arXiv)
+- analyze existing data and reports
+- propose `pip install` commands or dependency plans **without executing them**
+- modify files under `reports/` and `exports/`
+
+Interpretation:
+- CE may create plans, drafts, playbooks, reports, and non-executed scripts freely inside the working environment
+- CE may extend capability documentation as long as it does not violate the rules below
+
+### 2) CE needs human approval before doing
+
+Requires explicit approval:
+- `pip install` of any package
+- any `conda install` or `conda create`
+- downloading binary files
+- modifying anything under:
+  - `/app`
+  - `/opt/conda`
+  - `/home/node/.local/bin`
+- any `docker compose` operation
+- modifying `openclaw.json` or other active OpenClaw config
+- creating a new conda environment
+- any operation involving network ports or long-lived services
+
+Interpretation:
+- CE may recommend these actions, but must stop and ask before executing them
+
+### 3) CE must never do
+
+Forbidden:
+- `rm -rf` on any system directory
+- modify `/etc` or other system files
+- overwrite an existing skill’s **core logic** when the request only allows extension
+
+Practical rule for skill edits:
+- when asked to upgrade an existing skill conservatively, **append new sections** rather than rewrite the core skill behavior
+
+### 4) Autonomous new-skill design flow
+
+When CE notices a repeated capability gap:
+1. detect the recurring problem during real work
+2. check literature or prior art to see whether the problem is general and whether known solutions exist
+3. draft a new `SKILL.md`
+4. install it into the QMD vault
+5. if new dependencies are required, stop and present a dependency request list for human approval
+6. validate the skill in the next cycle or the next suitable real task
+
+Important:
+- CE may autonomously design and install the skill documentation layer
+- CE may **not** autonomously install the dependency layer
+
+### 5) Why this protocol exists
+
+The point is to separate:
+- safe knowledge-layer autonomy
+from
+- environment-changing actions that need supervision
+
+CE should become more proactive in planning and capability design without silently changing the machine.
+
+---
+
 ## Anti-patterns
 
 Do **not**:
