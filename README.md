@@ -222,6 +222,19 @@ First cycle using entity resolution, three-layer safety, evidence schema, and To
 - **mol_0064** (Cycle 6): Best Vina (-10.04) + highest score_final (10.432), but Boltz-2 binder_prob only 0.12
 - **mol_0021** (Cycle 7): Highest Boltz-2 binder_prob (0.698) + robust hinge (3/3), but lower Vina (-8.91)
 
+### Analog Exploration: mol_0021 Neighborhood Validation
+
+A 10-member analog panel around mol_0021 validated that the lead is not a one-off hit:
+
+- 7/10 analogs retained hinge H-bond (70%)
+- Top 3 (A5_01, A3_02, A3_01) all passed strict 3-seed robustness + QE DFT (3/3 PASS)
+- **A3_02**: strongest Vina–Boltz consensus (Vina -10.00, Boltz binder_prob 0.704 — exceeding parent)
+- **A5_01**: strongest docking + GNINA (Vina -10.12, CNNscore 0.703)
+- **A3_01**: strongest QE profile (gap 4.79 eV, dipole 1.62 D, score_final 10.635 — project-wide #1)
+- All analogs carry N–N safety caution (scaffold-level, not compound-specific)
+
+The mol_0021 chemotype neighborhood is real and survives the full CE↔QE validation stack. The limiting factor is no longer efficacy signals but the scaffold-level safety constraint. Full details in `case-studies/analog-exploration/`.
+
 ## Architecture Lessons Learned
 
 **1. VAE conditioning failure.** Six experiments across two cycles demonstrated that SELFIES GRU VAE decoders structurally ignore external conditioning signals. Inference-time intervention (logit bias, rejection sampling) is the validated solution. Documented as Strategy E in skill 17.
