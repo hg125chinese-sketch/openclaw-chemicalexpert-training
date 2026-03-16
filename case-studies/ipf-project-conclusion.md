@@ -28,15 +28,18 @@ DFT PASS molecules discovered in the CE↔QE loop:
 
 | Final rank* | Cycle | ID | Vina | gap (eV) | score_final | Comment |
 |---:|---:|---|---:|---:|---:|---|
-| 1 | 6 | mol_0064 | **-10.040** | 2.90 | **10.432** | Best PASS so far by the current score (very strong docking; multi-seed hinge robust) |
-| 2 | 5 | cycle5_top5_hinge_1 | -10.010 | 2.71 | 10.404 | Prior best PASS (Cycle 5) |
-| 3 | 4 | cycle4_top5_hinge_2 | -9.102 | 2.38 | 9.424 | Prior best PASS before Cycle 5 |
-| 4 | 5 | cycle5_top5_hinge_2 | -9.134 | 2.38 | 9.315 | PASS; higher dipole penalty |
-| 5 | 5 | cycle5_top5_hinge_3 | -8.935 | 2.42 | 9.186 | PASS |
-| 6 | 7 | mol_0021 | -8.906 | 2.95 | 9.136 | PASS; strongest Boltz-2 signal so far, first full infrastructure-upgraded winner |
-| 7 | 3 | cycle3_top5_hinge_4 | -8.295 | 2.77 | 8.658 | PASS |
-| 8 | 3 | cycle3_top5_hinge_2 | -8.003 | 2.09 | 8.354 | PASS |
-| 9 | 6 | mol_0017 | -7.253 | 2.68 | 7.617 | PASS (weaker docking but QC PASS; included for completeness) |
+| 1 | analog | A3_01 | -9.758 | 4.79 | **10.635** | PASS; best analog by QE-style gap/dipole profile |
+| 2 | 6 | mol_0064 | **-10.040** | 2.90 | 10.432 | Best original-cycle PASS so far by the current score (very strong docking; multi-seed hinge robust) |
+| 3 | 5 | cycle5_top5_hinge_1 | -10.010 | 2.71 | 10.404 | Prior best PASS (Cycle 5) |
+| 4 | analog | A3_02 | -10.000 | 3.56 | 10.385 | PASS; best analog Vina–Boltz consensus and strongest balanced analog lead |
+| 5 | analog | A5_01 | -10.120 | 2.93 | 10.299 | PASS; best docking analog, higher dipole penalty |
+| 6 | 4 | cycle4_top5_hinge_2 | -9.102 | 2.38 | 9.424 | Prior best PASS before Cycle 5 |
+| 7 | 5 | cycle5_top5_hinge_2 | -9.134 | 2.38 | 9.315 | PASS; higher dipole penalty |
+| 8 | 5 | cycle5_top5_hinge_3 | -8.935 | 2.42 | 9.186 | PASS |
+| 9 | 7 | mol_0021 | -8.906 | 2.95 | 9.136 | PASS; strongest Boltz-2 signal so far, first full infrastructure-upgraded winner |
+| 10 | 3 | cycle3_top5_hinge_4 | -8.295 | 2.77 | 8.658 | PASS |
+| 11 | 3 | cycle3_top5_hinge_2 | -8.003 | 2.09 | 8.354 | PASS |
+| 12 | 6 | mol_0017 | -7.253 | 2.68 | 7.617 | PASS (weaker docking but QC PASS; included for completeness) |
 
 \*Ranking basis: a simple, auditable multi-objective score used for handoff triage:
 - primary: docking (more negative Vina is better)
@@ -73,15 +76,26 @@ This is a decision-support ranking, not a claim of true binding affinity.
   - **16%** safety reject rate
 - It also produced the strongest ALK5 Boltz-2 signal seen so far (`mol_0021`, binder_prob **0.698**), though Boltz remains a weak orthogonal signal rather than a primary gate.
 
+### F) The mol_0021 neighborhood is real, not a one-off
+- Focused analog exploration around `mol_0021` produced a strong local neighborhood:
+  - **7/10** analogs retained hinge H-bond
+  - top 3 analogs were all **strict multi-seed robust**
+  - all top 3 analogs achieved **DFT PASS**
+- The strongest analog signals separated by method:
+  - `A5_01`: best docking / CNNscore analog
+  - `A3_02`: best Vina–Boltz consensus analog (`binder_prob 0.704`, above parent)
+  - `A3_01`: best QE-style gap/dipole analog
+- This is strong evidence that the Cycle 7 lead defines a genuinely exploitable chemotype neighborhood, albeit still under a scaffold-level N–N safety caution.
+
 ---
 
 ## 4) CE↔QE collaboration statistics
 
 Across the CE↔QE QC loop:
-- Sent to QE (DFT QC): **12 molecules**
-- DFT PASS: **9**
+- Sent to QE (DFT QC): **15 molecules**
+- DFT PASS: **12**
 - DFT OPT_FAIL: **3**
-- Fail rate: **25%**
+- Fail rate: **20%**
 
 Breakdown:
 - Cycle 3: 4 sent → 2 PASS / 2 OPT_FAIL
@@ -89,6 +103,10 @@ Breakdown:
 - Cycle 5: 3 sent → 3 PASS / 0 OPT_FAIL
 - Cycle 6: 2 sent → 2 PASS / 0 OPT_FAIL
 - Cycle 7: 1 sent → 1 PASS / 0 OPT_FAIL
+- Analog exploration: 3 sent → 3 PASS / 0 OPT_FAIL
+
+DiffSBDD-era QE summary:
+- Cycle 5 + Cycle 6 + Cycle 7 + analog exploration = **9/9 PASS (100%)**
 
 ---
 
