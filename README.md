@@ -216,7 +216,7 @@ First cycle using entity resolution, three-layer safety, evidence schema, and To
 | Best score_final | — | — | — | — | 10.404 | **10.432** | 9.136 |
 | Boltz-2 best binder_prob | — | — | — | — | — | 0.12 | **0.698** |
 
-**CE↔QE collaboration statistics:** 12 molecules submitted for DFT across 5 cycles. 9 PASS, 3 OPT_FAIL (25% overall fail rate). DiffSBDD era (Cycles 5-7): **6/6 = 100% PASS**.
+**CE↔QE collaboration statistics:** 15 molecules submitted for DFT across 5 cycles + analog campaign. 12 PASS, 3 OPT_FAIL (20% overall fail rate). DiffSBDD era (Cycles 5-7): **6/6 = 100% PASS**.
 
 **Top candidates by multi-signal consensus:**
 - **mol_0064** (Cycle 6): Best Vina (-10.04) + highest score_final (10.432), but Boltz-2 binder_prob only 0.12
@@ -302,6 +302,7 @@ First cycle using entity resolution, three-layer safety, evidence schema, and To
 │   ├── ipf-cycle5/                    # Cycle 5: DiffSBDD + 100% DFT pass
 │   ├── ipf-cycle6/                    # Cycle 6: multi-signal validation pipeline
 │   ├── ipf-cycle7/                    # Cycle 7: full 28-skill pipeline + cognitive capabilities
+│   ├── analog-exploration/             # Analog campaign: mol_0021 neighborhood validation
 │   └── ipf-project-conclusion.md      # Final results across all cycles
 └── .gitignore
 ```
