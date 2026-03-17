@@ -216,7 +216,7 @@ First cycle using entity resolution, three-layer safety, evidence schema, and To
 | Best score_final | — | — | — | — | 10.404 | **10.432** | 9.136 |
 | Boltz-2 best binder_prob | — | — | — | — | — | 0.12 | **0.698** |
 
-**CE↔QE collaboration statistics:** 15 molecules submitted for DFT across 5 cycles + analog campaign. 12 PASS, 3 OPT_FAIL (20% overall fail rate). DiffSBDD era (Cycles 5-7 + analogs): **9/9 = 100% PASS**.
+**CE↔QE collaboration statistics:** 18 molecules submitted for DFT across 5 cycles + analog campaign + N-N de-risking. 15 PASS, 3 OPT_FAIL (17% overall fail rate). DiffSBDD era (Cycles 5-7 + analogs + N-N de-risking): **12/12 = 100% PASS**.
 
 **Top candidates by multi-signal consensus:**
 - **mol_0064** (Cycle 6): Best Vina (-10.04) + highest score_final (10.432), but Boltz-2 binder_prob only 0.12
@@ -234,6 +234,21 @@ A 10-member analog panel around mol_0021 validated that the lead is not a one-of
 - All analogs carry N–N safety caution (scaffold-level, not compound-specific)
 
 The mol_0021 chemotype neighborhood is real and survives the full CE↔QE validation stack. The limiting factor is no longer efficacy signals but the scaffold-level safety constraint. Full details in `case-studies/analog-exploration/`.
+
+### N-N De-Risking: Safety Liability Removal
+
+The autonomous cycle planning system (skill 28) identified N-N safety as the new primary bottleneck after the analog campaign. An 8-member N-N-free analog panel was designed using bioisosteric replacements (azetidine, pyrrolidine, piperidine, morpholine, oxetane, sp3 biaryl, urea, amide bridges), all confirmed N-N-alert-free by SMARTS screening.
+
+Key results:
+- 6/8 N-N-free analogs retained hinge H-bond (75%)
+- 3/6 passed strict 3-seed robustness (NNF_02, NNF_07, NNF_05)
+- All 3 robust hits passed QE DFT (3/3 PASS, B3LYP-D3(BJ)/def2-SVP)
+- **NNF_02** (pyrrolidine bridge): Vina **-10.71** — project-wide best docking score, but Boltz-2 only 0.154 (Vina vs Boltz disagreement)
+- **NNF_05** (oxetane bridge): Boltz-2 **0.616** — strongest Boltz signal among N-N-free analogs, most parent-like profile
+- **NNF_07** (urea linker): gap **4.96 eV** — highest electronic stability, most balanced medchem profile
+- Critical discovery: removing the N-N bridge improved HOMO-LUMO gap from ~2.9 eV (N-N series) to **4.6–5.0 eV** (N-N-free series)
+
+The N-N de-risking campaign demonstrated that the validated pose family can survive scaffold-level safety redesign without collapsing. Full details in `case-studies/analog-exploration/nn_derisking_summary.md`.
 
 ## Architecture Lessons Learned
 
@@ -315,7 +330,7 @@ The mol_0021 chemotype neighborhood is real and survives the full CE↔QE valida
 │   ├── ipf-cycle5/                    # Cycle 5: DiffSBDD + 100% DFT pass
 │   ├── ipf-cycle6/                    # Cycle 6: multi-signal validation pipeline
 │   ├── ipf-cycle7/                    # Cycle 7: full 28-skill pipeline + cognitive capabilities
-│   ├── analog-exploration/             # Analog campaign: mol_0021 neighborhood validation
+│   ├── analog-exploration/            # Analog campaign: mol_0021 neighborhood validation + N-N de-risking
 │   └── ipf-project-conclusion.md      # Final results across all cycles
 └── .gitignore
 ```
