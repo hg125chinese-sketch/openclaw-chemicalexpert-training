@@ -1,0 +1,7 @@
+analog_id,smiles,pb_valid,safety_pass,vina_best,hinge_3of3,gnina_cnnscore,boltz_binder_prob,dft_pass,gap_eV,dipole_D
+NNF05_S05,Nc1ncccc1C1COC1Nc1cc2ccoc2c(F)c1F,True,True,-9.642,True,0.29374,0.5053485631942749,True,4.97,1.54
+NNF05_S08,Nc1ncccc1C1CSC1Nc1cc(F)c2occc2c1,True,True,-9.33,True,0.17289,0.4053093791007995,,,
+NNF05_S10,Cc1cc2cc(NC3COC3c3cccnc3N)cc(F)c2o1,True,True,-9.075,True,0.09315,0.5911296010017395,True,4.76,2.67
+NNF05_S04,Nc1ncccc1C1COC1Nc1ccc2occc2c1F,True,True,-9.536,False,0.36497,,,,
+NNF05_S01,CC1OC(Nc2cc(F)c3occc3c2)C1c1cccnc1N,True,True,-9.466,False,0.26678,,,,
+NNF05_S02,Nc1ncccc1C1C(F)OC1Nc1cc(F)c2occc2c1,True,True,-9.25,False,0.7939,,,,
