@@ -10,9 +10,10 @@ I trained an AI agent ("ChemicalExpert") with **28 specialized chemistry skills*
 - Ran 6 controlled experiments to fix molecular generation, documenting every failure
 - Improved Top5 candidate quality from **20% to 80%** passing the critical hinge H-bond gate
 - Discovered that SELFIES GRU VAE decoders structurally ignore conditioning signals — a finding validated across 6 independent experiments
-- Upgraded to pocket-conditioned 3D diffusion (DiffSBDD), achieving **100% DFT pass rate** across three consecutive cycles
+- Upgraded to pocket-conditioned 3D diffusion (DiffSBDD), achieving **100% DFT pass rate** across three consecutive cycles and three follow-up campaigns (14/14)
 - Built a full multi-signal pipeline with PoseBusters geometry QC, GNINA CNN rescoring, multi-seed pose robustness, Boltz-2 affinity prediction, conflict-aware panel selection, and ToolUniverse-powered target validation
 - Developed cognitive capabilities: self-diagnosis, scientific reasoning, cross-cycle learning, and supervised autonomous cycle planning
+- Autonomously identified N-N safety as a bottleneck, designed and validated N-N-free replacements, then optimized the best de-risked lead to achieve the project's highest HOMO-LUMO gap (4.97 eV) and lowest dipole (1.54 D)
 
 ## The Problem
 
@@ -72,7 +73,7 @@ Skills are organized in three layers: computational chemistry (1-21), scientific
 | 17 | Scaffold-Conditioned Generation | VAE diagnostics, anti-collapse strategies, constrained decoding (Strategy E) |
 | 18 | Pocket-Conditioned Diffusion | DiffSBDD 3D ligand generation, GPU inference, substructure inpainting |
 | 19 | Binding Affinity Prediction | Boltz-2 affinity (isolated env), IC50 + binder probability, target calibration |
-| 20 | Panel Selection | Multi-signal conflict-aware selection, 2x2 disagreement grid, auditable rationale |
+| 20 | Panel Selection | Multi-signal conflict-aware selection, 2x2 disagreement grid, hinge-aware pre-ranking, auditable rationale |
 | 21 | Structure QC Lite | PoseBusters geometry/pose plausibility, post-gen + post-dock checkpoints |
 
 ### Layer 2: Scientific Infrastructure (Skills 22-24)
@@ -216,7 +217,7 @@ First cycle using entity resolution, three-layer safety, evidence schema, and To
 | Best score_final | — | — | — | — | 10.404 | **10.432** | 9.136 |
 | Boltz-2 best binder_prob | — | — | — | — | — | 0.12 | **0.698** |
 
-**CE↔QE collaboration statistics:** 18 molecules submitted for DFT across 5 cycles + analog campaign + N-N de-risking. 15 PASS, 3 OPT_FAIL (17% overall fail rate). DiffSBDD era (Cycles 5-7 + analogs + N-N de-risking): **12/12 = 100% PASS**.
+**CE↔QE collaboration statistics:** 20 molecules submitted for DFT across 5 cycles + analog campaign + N-N de-risking + NNF05 successor campaign. 17 PASS, 3 OPT_FAIL (15% overall fail rate). DiffSBDD era (Cycles 5-7 + analogs + N-N de-risking + NNF05 successor): **14/14 = 100% PASS**.
 
 **Top candidates by multi-signal consensus:**
 - **mol_0064** (Cycle 6): Best Vina (-10.04) + highest score_final (10.432), but Boltz-2 binder_prob only 0.12
@@ -230,10 +231,10 @@ A 10-member analog panel around mol_0021 validated that the lead is not a one-of
 - Top 3 (A5_01, A3_02, A3_01) all passed strict 3-seed robustness + QE DFT (3/3 PASS)
 - **A3_02**: strongest Vina–Boltz consensus (Vina -10.00, Boltz binder_prob 0.704 — exceeding parent)
 - **A5_01**: strongest docking + GNINA (Vina -10.12, CNNscore 0.703)
-- **A3_01**: strongest QE profile (gap 4.79 eV, dipole 1.62 D, score_final 10.635 — project-wide #1)
+- **A3_01**: strongest QE profile (gap 4.79 eV, dipole 1.62 D, score_final 10.635 — project-wide #1 at time of testing)
 - All analogs carry N–N safety caution (scaffold-level, not compound-specific)
 
-The mol_0021 chemotype neighborhood is real and survives the full CE↔QE validation stack. The limiting factor is no longer efficacy signals but the scaffold-level safety constraint. Full details in `case-studies/analog-exploration/`.
+The mol_0021 chemotype neighborhood is real and survives the full CE↔QE validation stack. The limiting factor was no longer efficacy signals but the scaffold-level safety constraint. Full details in `case-studies/analog-exploration/`.
 
 ### N-N De-Risking: Safety Liability Removal
 
@@ -249,6 +250,18 @@ Key results:
 - Critical discovery: removing the N-N bridge improved HOMO-LUMO gap from ~2.9 eV (N-N series) to **4.6–5.0 eV** (N-N-free series)
 
 The N-N de-risking campaign demonstrated that the validated pose family can survive scaffold-level safety redesign without collapsing. Full details in `case-studies/analog-exploration/nn_derisking_summary.md`.
+
+### NNF05 Successor Campaign: Optimizing the De-Risked Lead
+
+A focused 10-member successor panel around the global primary de-risked lead NNF_05 (oxetane bridge), covering bridge microtuning, F-scan, hinge pyridine modifications, bridge atom effects, and an A5_01 hybrid.
+
+Key results from batch testing (6 of 10 tested):
+- 3/6 passed hinge 3/3 (NNF05_S05, NNF05_S08, NNF05_S10)
+- Top 2 sent to QE DFT → **2/2 PASS** (B3LYP-D3(BJ)/def2-SVP)
+- **NNF05_S05** (diF variant): gap **4.97 eV** — project-wide highest; dipole **1.54 D** — project-wide lowest; Vina **-9.64** — strongest among hinge-passing successors; Boltz 0.505
+- **NNF05_S10** (A5_01 hybrid): gap 4.76 eV, dipole 2.67 D, Boltz **0.591** — strongest Boltz among successors
+
+NNF05_S05 is the new global QE benchmark — it surpasses every molecule in the project on electronic stability metrics while maintaining hinge binding, N-N-free safety, and DFT validation. Full details in `case-studies/nnf05-successor/`.
 
 ## Architecture Lessons Learned
 
@@ -268,6 +281,10 @@ The N-N de-risking campaign demonstrated that the validated pose family can surv
 
 **8. Standardized evidence objects enable cross-skill reasoning.** The Evidence schema (skill 23) with T1-T4 grading and conflict detection allows the agent to reason about disagreements between tools rather than averaging away informative signals.
 
+**9. Cognitive capabilities close the planning loop.** Skills 25-28 enable the agent to diagnose its own failures, extract cross-cycle lessons, and propose next steps autonomously. The hinge-aware pre-ranking update (25%→65%), the N-N de-risking campaign, and the NNF05 successor campaign were all proposed or informed by the agent through this system.
+
+**10. N-N removal improves electronic stability.** Replacing the N-N bridge with C-N, O-containing, or amide/urea linkers increased the HOMO-LUMO gap from ~2.9 eV to 4.6–5.0 eV while preserving the validated binding mode. Further optimization via di-fluorination (NNF05_S05) pushed the gap to 4.97 eV and dipole to 1.54 D — both project-wide records.
+
 ## Practical Lessons
 
 **For agent trainers:**
@@ -285,6 +302,8 @@ The N-N de-risking campaign demonstrated that the validated pose family can surv
 - Multi-agent collaboration works. CE→QE handoff with typed JSON contracts and explicit gates closed the loop from generation to quantum-chemical verification.
 - Multi-signal validation is worth the compute cost. Single-metric ranking produces false positives that only surface in expensive downstream experiments.
 - ToolUniverse integration (1996 scientific tools via unified API) dramatically accelerates target validation and evidence gathering.
+- Autonomous cycle planning works. The agent's cognitive skill stack (skills 25-28) correctly identified bottleneck shifts from hinge generation to N-N safety to lead optimization, proposed each campaign, and the resulting leads passed all validation gates.
+- Iterative lead optimization compounds gains. The progression from mol_0021 → NNF_05 → NNF05_S05 shows that each campaign builds on the last, with the final successor exceeding every prior molecule on QE stability metrics.
 
 ## Repository Structure
 
@@ -313,7 +332,7 @@ The N-N de-risking campaign demonstrated that the validated pose family can surv
 │   ├── chem-scaffold-conditioned-gen/SKILL.md # 17: Conditioned generation
 │   ├── chem-pocket-diffusion/SKILL.md # 18: Pocket-conditioned diffusion
 │   ├── chem-affinity-prediction/SKILL.md # 19: Binding affinity prediction
-│   ├── chem-panel-selection/SKILL.md  # 20: Panel selection
+│   ├── chem-panel-selection/SKILL.md  # 20: Panel selection (+ hinge-aware pre-ranking)
 │   ├── chem-structure-qc-lite/SKILL.md # 21: Structure QC lite
 │   ├── chem-target-validation/SKILL.md # 22: Target validation
 │   ├── chem-evidence-schema/SKILL.md  # 23: Evidence schema
@@ -330,8 +349,9 @@ The N-N de-risking campaign demonstrated that the validated pose family can surv
 │   ├── ipf-cycle5/                    # Cycle 5: DiffSBDD + 100% DFT pass
 │   ├── ipf-cycle6/                    # Cycle 6: multi-signal validation pipeline
 │   ├── ipf-cycle7/                    # Cycle 7: full 28-skill pipeline + cognitive capabilities
-│   ├── analog-exploration/            # Analog campaign: mol_0021 neighborhood validation + N-N de-risking
-│   └── ipf-project-conclusion.md      # Final results across all cycles
+│   ├── analog-exploration/            # Analog campaign + N-N de-risking
+│   ├── nnf05-successor/              # NNF05 successor campaign: S05 diF variant
+│   └── ipf-project-conclusion.md      # Final results across all cycles + campaigns
 └── .gitignore
 ```
 

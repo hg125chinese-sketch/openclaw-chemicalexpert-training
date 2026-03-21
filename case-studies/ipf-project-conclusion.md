@@ -1,6 +1,6 @@
 # IPF / ALK5 (TGFBR1) — Project Conclusion (CE↔QE)
 
-This report summarizes the full IPF/ALK5 project across **7 cycles**, focusing on what was learned about conditioned generation, docking/interaction KPIs, and the CE↔QE collaboration loop for DFT QC.
+This report summarizes the full IPF/ALK5 project across **7 cycles**, an analog exploration campaign, an N-N de-risking campaign, and a NNF05 successor campaign, focusing on what was learned about conditioned generation, docking/interaction KPIs, and the CE↔QE collaboration loop for DFT QC.
 
 ---
 
@@ -17,7 +17,7 @@ This report summarizes the full IPF/ALK5 project across **7 cycles**, focusing o
 | 7 | Full infrastructure-upgraded pipeline (entity resolver + three-layer safety + evidence schema + upgraded structure stack) | DiffSBDD + full 24-skill pipeline | **5 hinge+ Top20; 1 strict robust lead** | 1 sent → 1 PASS / 0 OPT_FAIL | **16%** (post-PB set) |
 
 Notes:
-- “Top5 hinge H-bond” is evaluated on docked poses via interaction analysis (ProLIF), not inferred from motifs alone.
+- "Top5 hinge H-bond" is evaluated on docked poses via interaction analysis (ProLIF), not inferred from motifs alone.
 - Cycle 7 is the first cycle to standardize entity IDs up front and preserve panel evidence in a normalized schema.
 
 ---
@@ -26,27 +26,29 @@ Notes:
 
 DFT PASS molecules discovered in the CE↔QE loop:
 
-| Final rank* | Cycle | ID | Vina | gap (eV) | score_final | Comment |
-|---:|---:|---|---:|---:|---:|---|
-| 1 | nnfree | NNF_02 | -10.710 | 4.61 | **11.432** | PASS; strongest de-risked docking lead, but clear Vina–Boltz disagreement case |
-| 2 | analog | A3_01 | -9.758 | 4.79 | 10.635 | PASS; best analog by QE-style gap/dipole profile |
-| 3 | nnfree | NNF_07 | -9.712 | 4.96 | 10.448 | PASS; best-gap N-N-free analog and balanced urea-linked option |
-| 4 | 6 | mol_0064 | **-10.040** | 2.90 | 10.432 | Best original-cycle PASS so far by the current score (very strong docking; multi-seed hinge robust) |
-| 5 | 5 | cycle5_top5_hinge_1 | -10.010 | 2.71 | 10.404 | Prior best PASS (Cycle 5) |
-| 6 | analog | A3_02 | -10.000 | 3.56 | 10.385 | PASS; best analog Vina–Boltz consensus and strongest balanced analog lead |
-| 7 | analog | A5_01 | -10.120 | 2.93 | 10.299 | PASS; best docking analog, higher dipole penalty |
-| 8 | nnfree | NNF_05 | -9.372 | 4.85 | 10.159 | PASS; strongest parent-like Boltz-supported N-N-free continuation |
-| 9 | 4 | cycle4_top5_hinge_2 | -9.102 | 2.38 | 9.424 | Prior best PASS before Cycle 5 |
-| 10 | 5 | cycle5_top5_hinge_2 | -9.134 | 2.38 | 9.315 | PASS; higher dipole penalty |
-| 11 | 5 | cycle5_top5_hinge_3 | -8.935 | 2.42 | 9.186 | PASS |
-| 12 | 7 | mol_0021 | -8.906 | 2.95 | 9.136 | PASS; strongest Boltz-2 signal so far, first full infrastructure-upgraded winner |
-| 13 | 3 | cycle3_top5_hinge_4 | -8.295 | 2.77 | 8.658 | PASS |
-| 14 | 3 | cycle3_top5_hinge_2 | -8.003 | 2.09 | 8.354 | PASS |
-| 15 | 6 | mol_0017 | -7.253 | 2.68 | 7.617 | PASS (weaker docking but QC PASS; included for completeness) |
+| Final rank* | Campaign | ID | Vina | gap (eV) | dipole (D) | score_final | Comment |
+|---:|---|---|---:|---:|---:|---:|---|
+| 1 | nnfree | NNF_02 | -10.710 | 4.61 | 3.95 | **11.432** | PASS; strongest de-risked docking lead, but clear Vina-Boltz disagreement |
+| 2 | analog | A3_01 | -9.758 | 4.79 | 1.62 | 10.635 | PASS; best analog by QE-style gap/dipole profile |
+| 3 | nnfree | NNF_07 | -9.712 | 4.96 | 5.14 | 10.448 | PASS; best-gap N-N-free analog, balanced urea linker |
+| 4 | 6 | mol_0064 | **-10.040** | 2.90 | — | 10.432 | Best original-cycle PASS (very strong docking; multi-seed hinge robust) |
+| 5 | 5 | cycle5_top5_hinge_1 | -10.010 | 2.71 | — | 10.404 | Prior best PASS (Cycle 5) |
+| 6 | analog | A3_02 | -10.000 | 3.56 | 6.55 | 10.385 | PASS; best analog Vina-Boltz consensus |
+| 7 | analog | A5_01 | -10.120 | 2.93 | 8.15 | 10.299 | PASS; best docking analog, higher dipole penalty |
+| 8 | nnfree | NNF_05 | -9.372 | 4.85 | 3.65 | 10.159 | PASS; strongest parent-like Boltz-supported N-N-free lead |
+| 9 | **successor** | **NNF05_S05** | **-9.642** | **4.97** | **1.54** | **10.186** | **PASS; new global #1 by QE profile — highest gap, lowest dipole in project** |
+| 10 | **successor** | **NNF05_S10** | -9.075 | 4.76 | 2.67 | 9.587 | **PASS; hybrid lead, strongest Boltz among successors (0.591)** |
+| 11 | 4 | cycle4_top5_hinge_2 | -9.102 | 2.38 | — | 9.424 | Prior best PASS before Cycle 5 |
+| 12 | 5 | cycle5_top5_hinge_2 | -9.134 | 2.38 | — | 9.315 | PASS |
+| 13 | 5 | cycle5_top5_hinge_3 | -8.935 | 2.42 | — | 9.186 | PASS |
+| 14 | 7 | mol_0021 | -8.906 | 2.95 | — | 9.136 | PASS; strongest Boltz-2 signal (0.698), parent of all successor campaigns |
+| 15 | 3 | cycle3_top5_hinge_4 | -8.295 | 2.77 | — | 8.658 | PASS |
+| 16 | 3 | cycle3_top5_hinge_2 | -8.003 | 2.09 | — | 8.354 | PASS |
+| 17 | 6 | mol_0017 | -7.253 | 2.68 | — | 7.617 | PASS (weaker docking but QC PASS; included for completeness) |
 
 \*Ranking basis: a simple, auditable multi-objective score used for handoff triage:
 - primary: docking (more negative Vina is better)
-- secondary: larger HOMO–LUMO gap (proxy stability)
+- secondary: larger HOMO-LUMO gap (proxy stability)
 - tertiary: smaller dipole (proxy polarity)
 
 This is a decision-support ranking, not a claim of true binding affinity.
@@ -56,7 +58,7 @@ This is a decision-support ranking, not a claim of true binding affinity.
 ## 3) Key findings
 
 ### A) Training-time conditioning can be ignored by string VAEs
-- Multiple Cycle 2 “conditioning” variants showed that a SELFIES GRU VAE decoder can produce valid molecules while structurally **ignoring conditioning**.
+- Multiple Cycle 2 "conditioning" variants showed that a SELFIES GRU VAE decoder can produce valid molecules while structurally **ignoring conditioning**.
 - This was only visible when evaluated against a **hard domain KPI** (hinge H-bond / hinge-motif coverage), not by generic VAE diagnostics alone.
 
 ### B) Inference-time control works: Strategy E (logit-bias decoding)
@@ -68,7 +70,7 @@ This is a decision-support ranking, not a claim of true binding affinity.
 - A recurrent OPT_FAIL SMILES was observed again in Cycle 4, strengthening the conclusion that strain alone is insufficient.
 
 ### D) DiffSBDD geometry is not QC-ready (in this setup)
-- In Cycle 5, directly reusing **DiffSBDD-provided 3D coordinates** produced extremely high MACE relaxation/strain values (**~450–630 kcal/mol**), indicating geometries that are not suitable as direct QC inputs.
+- In Cycle 5, directly reusing **DiffSBDD-provided 3D coordinates** produced extremely high MACE relaxation/strain values (**~450-630 kcal/mol**), indicating geometries that are not suitable as direct QC inputs.
 - Switching to **RDKit ETKDGv3 + MMFF re-embedding** before MACE prescreen restored a stable QC workflow and achieved **3/3 PASS (0% failure)**.
 - Cycle 7 confirmed that this stabilized handoff recipe remains valid in the upgraded pipeline: `mol_0021` passed QE after RDKit re-embed + MACE prescreen.
 
@@ -86,29 +88,41 @@ This is a decision-support ranking, not a claim of true binding affinity.
   - all top 3 analogs achieved **DFT PASS**
 - The strongest analog signals separated by method:
   - `A5_01`: best docking / CNNscore analog
-  - `A3_02`: best Vina–Boltz consensus analog (`binder_prob 0.704`, above parent)
+  - `A3_02`: best Vina-Boltz consensus analog (`binder_prob 0.704`, above parent)
   - `A3_01`: best QE-style gap/dipole analog
-- This is strong evidence that the Cycle 7 lead defines a genuinely exploitable chemotype neighborhood, albeit still under a scaffold-level N–N safety caution.
+- This is strong evidence that the Cycle 7 lead defines a genuinely exploitable chemotype neighborhood, albeit still under a scaffold-level N-N safety caution.
 
 ### G) N-N de-risking succeeded without collapsing the lead family
 - An explicit N-N-free redesign campaign produced multiple hinge-stable, strict-robust, QE-valid successors.
 - Top N-N-free outcomes:
-  - `NNF_02`: best docking de-risked lead (`Vina -10.71`), but strong Vina–Boltz disagreement
+  - `NNF_02`: best docking de-risked lead (`Vina -10.71`), but strong Vina-Boltz disagreement
   - `NNF_05`: strongest parent-like Boltz-supported N-N-free continuation (`binder_prob 0.616`)
   - `NNF_07`: strongest gap among the N-N-free trio (`4.96 eV`)
 - Most importantly, the N-N-free finalists achieved **3/3 DFT PASS**.
-- QE properties also shifted upward: compared with parent-like winners around **~2.9 eV** gap, the N-N-free finalists landed around **4.6–5.0 eV**.
+- QE properties also shifted upward: compared with parent-like winners around **~2.9 eV** gap, the N-N-free finalists landed around **4.6-5.0 eV**.
 - This suggests the project now has a plausible path from a safety-constrained parent chemotype to a **de-risked successor family** with preserved structural signal and stronger QE stability proxies.
+
+### H) NNF05 successor campaign: diF variant sets new QE benchmark
+- A focused 10-member successor panel around the global primary de-risked lead NNF_05 was designed, covering oxetane bridge tuning, F-scan, hinge pyridine modifications, bridge atom effects, and a hybrid with A5_01.
+- Of the first 6 tested: **3 passed hinge 3/3** (S05, S08, S10), and the top 2 were sent to QE DFT.
+- Both **S05 and S10 achieved DFT PASS** (B3LYP-D3(BJ)/def2-SVP).
+- **NNF05_S05 (diF variant)** is the new project-wide QE benchmark:
+  - gap **4.97 eV** — highest in the entire project
+  - dipole **1.54 D** — lowest in the entire project
+  - Vina **-9.64** — strongest among hinge-passing successors
+  - hinge 3/3, N-N free, DFT PASS
+- NNF05_S10 (hybrid) serves as the Boltz-supported backup (binder_prob 0.591).
+- This campaign confirms that the de-risked scaffold family can be further optimized without collapsing the validated binding mode.
 
 ---
 
 ## 4) CE↔QE collaboration statistics
 
 Across the CE↔QE QC loop:
-- Sent to QE (DFT QC): **18 molecules**
-- DFT PASS: **15**
+- Sent to QE (DFT QC): **20 molecules**
+- DFT PASS: **17**
 - DFT OPT_FAIL: **3**
-- Fail rate: **17%**
+- Fail rate: **15%**
 
 Breakdown:
 - Cycle 3: 4 sent → 2 PASS / 2 OPT_FAIL
@@ -118,9 +132,10 @@ Breakdown:
 - Cycle 7: 1 sent → 1 PASS / 0 OPT_FAIL
 - Analog exploration: 3 sent → 3 PASS / 0 OPT_FAIL
 - N-N de-risking campaign: 3 sent → 3 PASS / 0 OPT_FAIL
+- NNF05 successor campaign: 2 sent → 2 PASS / 0 OPT_FAIL
 
 DiffSBDD-era QE summary:
-- Cycle 5 + Cycle 6 + Cycle 7 + analog exploration + N-N de-risking = **12/12 PASS (100%)**
+- Cycle 5 + Cycle 6 + Cycle 7 + analog exploration + N-N de-risking + NNF05 successor = **14/14 PASS (100%)**
 
 ---
 
@@ -136,12 +151,13 @@ For all DFT PASS molecules, a retrosynthesis + reaction-conditions annotation ha
 - Interaction KPIs depend on docking pose correctness and the chosen fingerprint/interaction definitions.
 - The retrosynthesis/conditions section is heuristic without automated route search and purchasable building-block validation.
 - MACE prescreen needs richer signals (optimizer diagnostics, multi-conformer screening, or additional geometry sanity checks) to predict DFT feasibility.
+- N-N safety constraint: partially resolved — 3 N-N-free robust leads identified (NNF_02, NNF_05, NNF_07) plus 2 successors (S05, S10), but further medchem optimization needed.
 
 ---
 
 ## 7) Future work
 
-1) Expand the docking batch beyond 50 (Cycle 4) and rerun interaction rerank to reduce sampling noise.
+1) Continue NNF05 successor exploration: test remaining 4 analogs (S03, S06, S07, S09) and consider second-generation successors around S05.
 2) Upgrade QC prescreen:
    - multi-seed RDKit embed retries,
    - multi-conformer MACE screening,
@@ -149,3 +165,4 @@ For all DFT PASS molecules, a retrosynthesis + reaction-conditions annotation ha
    - consider a repeated-OPT_FAIL blacklist only if failures persist.
 3) Add a more formal multi-objective model (learned from CE↔QE outcomes) once more labeled data accumulates.
 4) Convert retrosynthesis to concrete purchasable routes via an external planner + forward validation.
+5) New target campaign: apply the 28-skill pipeline to a new target (e.g. glucocorticoid receptor) to validate cross-target transferability.
