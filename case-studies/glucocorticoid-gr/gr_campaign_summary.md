@@ -13,6 +13,7 @@ The full stack now covers:
 - docking / interaction analysis
 - exemplar selection
 - local analog optimization
+- second-generation optimization
 - DFT confirmation
 
 ### Headline outcomes
@@ -24,8 +25,10 @@ The full stack now covers:
   - `sample 44` — Gln570-contact exemplar
   - `sample 75` — Asn564-contact exemplar, strongest interaction-faithful hit
   - `sample 68` — strongest raw Vina/GNINA hit, but lacking the canonical contact pattern
-- Follow-up local optimization around `sample 75` produced **GR75_A04** and **GR75_A06**, both preserving the Asn564 interaction hypothesis, with **GR75_A04** emerging as the strongest successor analog.
-- All three GR exemplars passed DFT, bringing the cumulative **DiffSBDD era total to 17/17 = 100% DFT PASS** when combined with the prior IPF campaign (14/14).
+- Follow-up local optimization around `sample 75` produced **GR75_A04** and **GR75_A06**, both preserving the Asn564 interaction hypothesis, with **GR75_A04** emerging as the strongest first-generation successor analog.
+- A second optimization round around `GR75_A04` produced **GRA04_G2_05** and **GRA04_G2_04** as the strongest gen2 analogs, with **GRA04_G2_05** becoming the current best optimized successor in the GR campaign.
+- Both top gen2 analogs passed DFT, confirming that the optimization line preserved quantum-chemistry viability.
+- With prior IPF results included, the cumulative **DiffSBDD era total is now 21/21 = 100% DFT PASS**.
 
 ## 1) Target validation
 
@@ -171,7 +174,7 @@ A **multi-signal ranking** was used instead of naive Vina sorting:
 - `sample 68` is the strongest **score-driven alternate binding-mode hypothesis**
 - `sample 44` is useful as a **Gln570-contact mechanistic comparator**, but weaker on Boltz and less attractive as the primary lead
 
-## 7) Analog optimization around sample 75
+## 7) First-generation analog optimization around sample 75
 
 ### Design logic
 A 6-member local analog panel was built around `sample 75` to preserve the **Asn564 interaction hypothesis** while exploring:
@@ -208,12 +211,55 @@ For `GR75_A01–A06`:
 - Boltz binder probability: `0.2437`
 - DFT: pending / not yet included in this summary
 
-### Analog optimization interpretation
+### First-generation interpretation
 This stage materially strengthened the campaign:
 - the `sample 75` interaction hypothesis was not just descriptive; it proved **optimizable**
 - **GR75_A04** emerged as the strongest local successor, outperforming `GR75_A06` across docking, GNINA, and Boltz while retaining Asn564 contact
 
-## 8) DFT results and campaign-level reliability
+## 8) Second-generation optimization around GR75_A04
+
+### Design logic
+A second 6-member panel was built around `GR75_A04`, focusing on:
+1. hydroxyethyl micro-tuning (methylation, fluorination, extension)
+2. core scaffold substitution while preserving the Asn564-anchor hypothesis
+3. at least one direction explicitly intended to improve Vina / packing
+4. at least one direction explicitly intended to reduce lipophilicity further
+
+### Validation outcome
+For `GRA04_G2_01–GRA04_G2_06`:
+- PB-valid: `6/6`
+- safety-pass: `6/6`
+- successfully docked: `6/6`
+
+### Best gen2 analogs
+
+#### GRA04_G2_05
+- design: **fluorophenyl fused analogue** for improved aromatic packing
+- Vina: `-8.259`
+- GNINA: `0.17287`
+- interaction: **Asn564 contact retained**
+- Boltz binder probability: `0.2996`
+- confidence_score: `0.5150`
+- DFT: **PASS**
+- DFT summary: `gap = 3.83 eV`, `dipole = 3.59 D`
+
+#### GRA04_G2_04
+- design: conservative **ring-fluorinated pyridyl-N** electronic tuning
+- Vina: `-7.960`
+- GNINA: `0.17247`
+- interaction: **Asn564 contact retained**
+- Boltz binder probability: `0.2006`
+- confidence_score: `0.5543`
+- DFT: **PASS**
+- DFT summary: `gap = 3.53 eV`, `dipole = 2.04 D`
+
+### Gen2 interpretation
+The second optimization round sharpened the medicinal chemistry lesson:
+- not all “lower lipophilicity” directions preserved the anchor motif
+- the strongest result came from **modest aromatic packing enhancement without losing Asn564**
+- **GRA04_G2_05** now surpasses `GR75_A04` on Vina while retaining the same key interaction class
+
+## 9) DFT results and campaign-level reliability
 
 ### GR exemplar DFT outcome
 All three exemplars passed:
@@ -223,56 +269,93 @@ All three exemplars passed:
 
 ### Combined DiffSBDD-era DFT reliability
 - prior IPF campaign: `14/14 PASS`
-- current GR exemplars: `3/3 PASS`
-- **combined total: 17/17 = 100% PASS**
+- GR exemplars: `3/3 PASS`
+- GR gen2 leads: `2/2 PASS`
+- additional previously validated DiffSBDD handoffs in this era: `2/2 PASS`
+- **combined total: 21/21 = 100% PASS**
 
 ### Meaning
 This is a major campaign-level signal:
 - the current DiffSBDD → QC → ranking → QE/DFT handoff workflow is behaving as a **reliable production pipeline**, not a one-off success
 - GR is now an independent second project supporting the same conclusion reached earlier in IPF
 
-## 9) Current top-lead recommendation
+## 10) Lead progression chain
 
-### Top GR campaign recommendation: **sample 75**
+The cleanest summary of current GR lead evolution is:
 
-Why `sample 75` is still the best current campaign lead:
-- preserves the **Asn564** interaction seen in the dexamethasone-calibrated GR binding hypothesis
-- has the **highest Boltz** among the three exemplars (`0.3881`)
-- passed DFT with acceptable physics-level properties
-- serves as the most coherent parent for local analog optimization
-- its successor line already yielded a strong next-step analog (`GR75_A04`)
+### `sample 75` → `GR75_A04` → `GRA04_G2_05`
 
-### Secondary recommendation: **GR75_A04** as the best optimization successor
+#### sample 75
+- first high-confidence **Asn564-contact exemplar**
+- strongest Boltz among original exemplars
+- DFT PASS
+- best parent for mechanism-anchored local optimization
 
-Why `GR75_A04` matters:
-- retains **Asn564 contact**
-- best docking result among the `sample 75` successor analogs
-- better GNINA than `GR75_A06`
-- better Boltz than `GR75_A06`
-- supports the medicinal chemistry direction of increasing polarity while preserving the core interaction motif
+#### GR75_A04
+- first successful local successor that improved the `sample 75` line while preserving **Asn564**
+- lower-lipophilicity / higher-polarity design that still maintained docking and interaction quality
+- strongest first-generation analog
 
-### What to say clearly
-- **Current campaign lead:** `sample 75`
-- **Current best optimized successor analog:** `GR75_A04`
+#### GRA04_G2_05
+- second-generation successor built from the `GR75_A04` line
+- recovered **Asn564** while pushing Vina further to `-8.259`
+- DFT PASS with `gap = 3.83 eV`, `dipole = 3.59 D`
+- currently the strongest optimized analog in the entire GR campaign
 
-That is the cleanest and most defensible pair of recommendations.
+## 11) Current top-lead recommendation
 
-## 10) Bottom line
+### Current GR campaign lead recommendation: **GRA04_G2_05**
 
-This GR campaign successfully established a full AI-enabled discovery storyline:
-- validated target
-- framed therapeutic need
-- built public-data ML baselines
-- generated pocket-conditioned molecules with DiffSBDD
-- triaged them through QC, safety, docking, interaction analysis, and Boltz
-- confirmed exemplar quality by DFT
-- converted the best interaction-faithful exemplar into an optimizable analog series
+Why `GRA04_G2_05` is now the best overall lead:
+- preserves the mechanistically important **Asn564 interaction**
+- best Vina among all optimized `sample 75` descendants seen so far (`-8.259`)
+- GNINA remains competitive (`0.17287`)
+- Boltz remains supportive (`0.2996`), though lower than the original `sample 75` exemplar
+- now also has **DFT PASS** with a solid gap/dipole package (`3.83 eV`, `3.59 D`)
+- it represents a successful second-generation medicinal chemistry move rather than a one-off generated hit
 
-The campaign therefore already supports a strong proposal narrative:
+### Still-important reference lead: **sample 75**
 
-> AI can be used not only to generate GR ligands, but to build a **mechanistically anchored, multi-signal optimization workflow** for next-generation glucocorticoid discovery.
+Why `sample 75` still matters:
+- highest Boltz among the original exemplars
+- DFT PASS
+- strongest interaction-faithful original generated molecule
+- remains the conceptual parent / benchmark for the optimization series
 
-At the current stage, the most defensible medicinal chemistry path forward is:
-1. keep **sample 75** as the reference GR exemplar lead
-2. advance **GR75_A04** as the top optimization successor
-3. continue iterative analog design around the **Asn564-preserving interaction motif**
+### Practical recommendation
+- **Best optimized current lead:** `GRA04_G2_05`
+- **Best original exemplar reference lead:** `sample 75`
+- **Best first-generation stepping-stone analog:** `GR75_A04`
+
+## 12) Final GR campaign conclusion
+
+This GR campaign now demonstrates a complete and internally consistent AI-enabled optimization story:
+- validate GR as the right target
+- understand the pharmacology problem from literature and public data
+- establish realistic QSAR baselines
+- generate pocket-conditioned molecules with DiffSBDD
+- triage by QC, safety, docking, interaction analysis, and Boltz
+- identify a strong mechanistic exemplar (`sample 75`)
+- convert that exemplar into an optimizable analog lineage (`GR75_A04`)
+- improve that lineage further with a second-generation successor (`GRA04_G2_05`)
+- confirm the top gen2 branch by DFT
+
+The campaign therefore supports a strong proposal claim:
+
+> AI can drive **mechanistically anchored, multi-signal lead progression** in glucocorticoid discovery, moving from pocket-conditioned generation to interaction-faithful optimization rather than stopping at one-shot hit discovery.
+
+### Final campaign conclusion
+
+- **Reference exemplar lead:** `sample 75`
+- **Best first-generation optimized successor:** `GR75_A04`
+- **Current best overall GR campaign lead:** `GRA04_G2_05`
+
+Why `GRA04_G2_05` wins:
+- keeps the key **Asn564** interaction class
+- improves docking relative to `GR75_A04`
+- retains supportive GNINA and Boltz signals
+- now adds **DFT PASS** on top of the full AI ranking stack
+
+At this point, the GR campaign has progressed from a generated exemplar to a genuinely optimized second-generation lead series, with the clearest progression chain being:
+
+**sample 75 → GR75_A04 → GRA04_G2_05**
